@@ -1,6 +1,7 @@
 {
   "name": "@orby/core",
-  "version": "0.0.0",
+  "global" :"orby",
+  "version": "0.0.1",
   "main": "dist/orby.js",
   "module": "dist/orby.m.js",
   "umd:main": "dist/orby.umd.js",
@@ -9,7 +10,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/UpperCod/orby.git"
+    "url": "https://github.com/orby-js/core.git"
   },
   "scripts": {
     "watch": "rollup -c -w",
