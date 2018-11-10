@@ -1,6 +1,6 @@
 import { VDom, isVDom } from "./vdom";
-import { create, remove, append, replace } from "./dom";
-export { h, VDom } from "./vdom";
+import { create, remove, append, replace, root } from "./dom";
+export { h, isVDom } from "./vdom";
 
 /**
  * Master is the mark to store the previous state
@@ -135,7 +135,7 @@ export function diff(parent, node, next, context = {}, isSvg) {
     } else {
         if (isCreate || next.emit("update", next.props, base) !== false) {
             diffProps(base, prev.props, next.props, isSvg);
-            let childNodes = Array.from(base.childNodes),
+            let childNodes = Array.from(root(base).childNodes),
                 length = Math.max(childNodes.length, children.length);
             for (let i = 0; i < length; i++) {
                 if (children[i]) {
