@@ -1,1 +1,1 @@
-export { render, h } from "./diff";
+export { render, h, isVDom } from "./diff";
