@@ -179,6 +179,12 @@ Run once the view has been rendered
 </h1>
 ```
 
+## Examples
+
+### [counter](https://jsfiddle.net/uppercod/Lsf6toe8/)
+
+Example that teaches how to work with the state of a component.
+
 ## Accessories
 
 ## @orby/tag
@@ -206,8 +212,9 @@ Finally you can use `<my-counter/>` without problems inside your **html**
 <my-counter state="20"></my-counter>
 ```
 
-## Soon
+## Soon...
 
-### @orby/router
+### @orby/router 
 ### @orby/store
 ### @orby/style
+

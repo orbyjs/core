@@ -184,6 +184,12 @@ Se ejecuta una vez ya renderizada la vista
 </h1>
 ```
 
+## Ejemplos
+
+### [counter](https://jsfiddle.net/uppercod/Lsf6toe8/)
+
+Ejemplo que enseña cómo trabajar con el estado de un componente.
+
 ## Complementos
 
 ## @orby/tag
@@ -211,7 +217,7 @@ Finalmente ud podrá usar `<my-counter/>` sin problemas dentro de su **html**
 <my-counter state="20"></my-counter>
 ```
 
-## Próximamente
+## Próximamente...
 
 ### @orby/router
 ### @orby/store
