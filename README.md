@@ -11,7 +11,7 @@
 
 ## Arguments of the component
 
-A component based on ** Orby **, can read 3 arguments.
+A component based on **Orby**, can read 3 arguments.
 
 1. **props** : Properties associated with the component.
 2. **state** : Controlador del estado del componente.
