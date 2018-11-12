@@ -1,63 +1,62 @@
+
+<img src="assets/logo.png" width="280px"/> 
+
 # @orby/core
 
-**orby** is a small **experiment of functional components** based on virtual-dom.
+**Orby** is a small experiment of functional components based on JSX and virtual-dom.
 
-```js
-import {h,render} from "funco";
+<img src="assets/counter.png" width="100%"/> 
 
-function App(props,{set,get}){
-   return <button click={()=>set("Funco!")}>
-       hello {get()||""}
-   </button>
-}
+> **Orby**, es responsable de mantener un estado único para cada componente funcional.
 
-render(
-   <App/>,
-   document.querySelector("#app")
-)
-```
+## Arguments of the component
 
-> All function with Funco, is a component with a micro state.
+A component based on ** Orby **, can read 3 arguments.
 
-## Functional component
-
-A component based on funco, can read 3 arguments.
-
-1. props : Properties associated with the component.
-2. state : Component status controller.
-3. context : Context given to the component from a higher level.
+1. **props** : Properties associated with the component.
+2. **state** : Controlador del estado del componente.
+3. **context** : Context given to the component from a higher level.
 
 ```js
 function Component(props,state,context){
-   return <div>
-       {props.children}
-   </div>
+  return <div>
+      {props.children}
+  </div>
 }
 ```
 
-> every time you run `state.set()`, it rerender the view associated only with the component.
+### Props
+
+Property object associated with the component definition:
+
+```js
+<Component id="10">
+   <h1>sample</h1> 
+</Component>
+
+```
+> the properties of the component will be `{id:"10", children:[...]}`
 
 ### State
 
-The state of each component is read by using `state.get ()` and is updated by using `state.set ()`.
+The state of each component is read by using `state.get()` and is updated by using `state.set()`.
 
 ```js
 function Component(props,state,context){
-   return <button click={()=>state.set("Funco!")}>
-       hello {state.get()||""}
-   </button>
+  return <button click={()=>state.set("Orby")}>
+      Hi {state.get()||""}
+  </button>
 }
 ```
 
-> You can use `{set, get}` to directly access `state.set` and `state.get`.
+You can use `{set, get}` to directly access `state.set` and `state.get`.
 
-Funco, allows an initial state definition externally, through the property `state = <any>`, associated to the component.
+**Orby**, allows an initial state definition externally, through the property `state=<any>`, associated to the component.
 
 ```js
-
 function App(props , {get}){
-    get()// [1,2,3,4,5]
-    return <button>Hi!</button>;
+   get()// [1,2,3,4,5]
+   return <button>Orby</button>;
 }
 
 <App state={[1,2,3,4,5]}/>
@@ -69,8 +68,8 @@ You can share states by using the `context=<any>` property, associated with the 
 
 ```js
 render(
-   <App context={[1,2,3]}/>,
-   document.querySelector("#app")
+  <App context={[1,2,3]}/>,
+  document.querySelector("#app")
 )
 ```
 
@@ -78,44 +77,37 @@ You can define an initial context simply as property.
 
 ```js
 function App(){
-   return <OtherComponent context={[1,2,3,4]}/>
+  return <OtherComponent context={[1,2,3,4]}/>
 }
 ```
 
-You can modify the context simply by defining yourself as a property.
+You can modify the context simply by defining it as a property.
 
 ### Children
 
-Unlike `React`, Funco forces every child associated with the component to be a virtual node.
+A diferencia de **React**, **Orby** obliga a cada niño asociado con el componente a ser un nodo virtual.
 
-As an author I do not find coherent the use of `props.children[0]`, to access a function.
+As an author I do not find coherent the use of `props.children[0]`, to access a function associated with the child.
 
 ```js
 <App>
 {()=>{
-   /** It doesn't work **/
+  /** It doesn't work **/
 }}
 </App>
 ```
-I strongly recommend associating it with a property since, in the opinion of the author, I find it more readable, and adapts to the best definition and type checking.
+
+Recommends associating it with a property because, in the opinion of the author, I find it more readable, and adapts to the best definition and type checking.
+
 ```js
 <App fun={()=>{
 
 }}/>
 ```
 
-### High order components
-
-Funco uses `Map` on the nest, to store the function associated to the component, you can share between multiple components a specific node of the document without any problem.
-
-
-> **Warning**, please do not try to create local components within the component, as this prevents the state of the component from being stored.
-
-
-
 ## Lifecycle
 
-I've got some ideas from [Hyperapp](https://github.com/jorgebucaran/hyperapp) ❤️ Funco.
+**Orby** has a life cycle inspired by [Hyperapp](https://github.com/jorgebucaran/hyperapp).
 
 ### create
 
@@ -123,9 +115,21 @@ It is executed once the tag is created.
 
 ```js
 <h1 create={(target:HTMLElement)=>{
-   /** any **/
+  /** any **/
 }}>
-   Hello!
+  Orby
+</h1>
+```
+
+### created
+
+It is executed once the node tree associated with the tag has been created.
+
+```js
+<h1 created={(target:HTMLElement)=>{
+  target.querySelector("button");
+}}>
+  <button>Orby</button>  
 </h1>
 ```
 
@@ -135,12 +139,22 @@ It runs once the label has been removed from the main node.
 
 ```js
 <h1 remove={(target:HTMLElement)=>{
-   /** any **/
+  /** any **/
 }}>
-   Hello!
+  Orby
 </h1>
 ```
+### removed
 
+It is executed once the remove event has been issued to all the children of the node.
+
+```js
+<h1 removed={(target:HTMLElement)=>{
+  /** any **/
+}}>
+  Orby
+</h1>
+```
 
 ### update
 
@@ -148,24 +162,52 @@ It runs once the view associated with the tag is rendered, if update returns `fa
 
 ```js
 <h1 update={(props:Object, target:HTMLElement)=>{
-   /** any **/
+  /** any **/
 }}>
-  Hello!
+   Orby
 </h1>
 ```
+### updated
+
+Run once the view has been rendered
+
 ```js
-import {h,create,update,remove,property,state} from "wcomponent";
-
-component("hello-tag",()=>{
-
-    property("name");
-
-    let {set,get} = state(()=>{
-
-    });
-
-    render((props)=><div>
-
-    </div>);
-});
+<h1 update={( target:HTMLElement)=>{
+  target.querySelector("button");
+}}>
+  <button>Orby</button>  
+</h1>
 ```
+
+## Accessories
+
+## @orby/tag
+
+It allows to encapsulate the entire render effect within a **custom-element**.
+
+```js
+import {h} from "@orby/core";
+import define from "@orby/tag";
+import Counter from "./components/counter";
+
+define(
+    <my-counter
+        props={["state"]}
+        render={Counter}
+    />
+);
+```
+
+Finally you can use `<my-counter/>` without problems inside your **html**
+
+```html
+<my-counter state="0"></my-counter>
+<my-counter state="10"></my-counter>
+<my-counter state="20"></my-counter>
+```
+
+## Soon
+
+### @orby/router
+### @orby/store
+### @orby/style
