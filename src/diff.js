@@ -133,7 +133,10 @@ export function diff(parent, node, next, context = {}, isSvg) {
             base.textContent = String(next.props.children[0]);
         }
     } else {
-        if (isCreate || next.emit("update", next.props, base) !== false) {
+        if (
+            isCreate ||
+            next.emit("update", base, prev.props, next.props) !== false
+        ) {
             diffProps(base, prev.props, next.props, isSvg);
             let childNodes = Array.from(root(base).childNodes),
                 length = Math.max(childNodes.length, children.length);
