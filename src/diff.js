@@ -130,7 +130,7 @@ export function diff(parent, node, next, context = {}, isSvg) {
         return components.get(component)(parent, base, next.props, context);
     } else if (!next.tag) {
         if (prev.props.children[0] !== next.props.children[0]) {
-            base.textContent = next.props.children[0];
+            base.textContent = String(next.props.children[0]);
         }
     } else {
         if (isCreate || next.emit("update", next.props, base) !== false) {
