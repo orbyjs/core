@@ -5,7 +5,7 @@
 
 **Orby** is a small experiment of functional components based on JSX and virtual-dom.
 
-<img src="assets/counter.png" width="100%"/> 
+[![Counter](assets/counter.png)](https://codesandbox.io/s/lpk8wy0njz)
 
 > **Orby**, is responsible for maintaining a unique state for each functional component.
 
