@@ -2,7 +2,7 @@
   "name": "@orby/core",
   "description": "Orby is a small experiment of functional components based on virtual-dom.",
   "global" :"orby",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/orby.js",
   "module": "dist/orby.m.js",
   "umd:main": "dist/orby.umd.js",
