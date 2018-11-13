@@ -7,7 +7,7 @@
 
 <img src="assets/counter.png" width="100%"/> 
 
-> **Orby**, es responsable de mantener un estado único para cada componente funcional.
+> **Orby**, is responsible for maintaining a unique state for each functional component.
 
 ## Arguments of the component
 
@@ -181,7 +181,7 @@ Run once the view has been rendered
 
 ## Examples
 
-### [counter](https://jsfiddle.net/uppercod/Lsf6toe8/)
+### [counter](https://codesandbox.io/s/lpk8wy0njz)
 
 Example that teaches how to work with the state of a component.
 

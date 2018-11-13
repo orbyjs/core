@@ -186,7 +186,7 @@ Se ejecuta una vez ya renderizada la vista
 
 ## Ejemplos
 
-### [counter](https://jsfiddle.net/uppercod/Lsf6toe8/)
+### [counter](https://codesandbox.io/s/lpk8wy0njz)
 
 Ejemplo que enseña cómo trabajar con el estado de un componente.
 
