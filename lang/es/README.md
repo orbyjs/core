@@ -64,11 +64,11 @@ function App(props , {get}){
 
 ### Context
 
-Ud puede compartir estados mediante el uso de la propiedad `context=<any>`, asociada al componente.
+Ud puede compartir estados mediante el uso de la propiedad `context=<object>`, asociada al componente.
 
 ```js
 render(
-  <App context={[1,2,3]}/>,
+  <App context={{parent:[1,2,3]}}/>,
   document.querySelector("#app")
 )
 ```
@@ -77,7 +77,7 @@ Ud puede definir un contexto inicial simplemente como propiedad
 
 ```js
 function App(){
-  return <OtherComponent context={[1,2,3,4]}/>
+  return <OtherComponent context={{parent:[1,2,3]}}/>
 }
 ```
 

@@ -64,11 +64,11 @@ function App(props , {get}){
 
 ### Context
 
-You can share states by using the `context=<any>` property, associated with the component.
+You can share states by using the `context=<object>` property, associated with the component.
 
 ```js
 render(
-  <App context={[1,2,3]}/>,
+  <App context={{parent:[1,2,3]}}/>,
   document.querySelector("#app")
 )
 ```
@@ -77,7 +77,7 @@ You can define an initial context simply as property.
 
 ```js
 function App(){
-  return <OtherComponent context={[1,2,3,4]}/>
+  return <OtherComponent context={{parent:[1,2,3]}}/>
 }
 ```
 
