@@ -19,7 +19,7 @@ export default {
         {
             file: pkg["umd:main"],
             format: "umd",
-            name: pkg.global || pkg.name,
+            name: pkg.name,
             sourcemap: true
         }
     ],
