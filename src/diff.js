@@ -39,6 +39,8 @@ export function render(next, parent, child, context, isSvg) {
 export function getMaster(base) {
     return (base && base[MASTER]) || {};
 }
+
+export function delay() {}
 /**
  *
  * @param {Function} component  - Function that controls the node
@@ -46,30 +48,36 @@ export function getMaster(base) {
  * @param {Boolean} [isSvg] - Create components for a group of svg
  * @return {HTMLElement} - Returns the current component node
  */
-export function createComponent(component, currentState, isSvg) {
-    return function update(parent, base, props, context) {
-        return (base = render(
-            component(
-                props,
-                {
-                    /**
-                     * send a new status to update, to render the view
-                     * @param {*} - New state
-                     */
-                    set: state => {
-                        if (base[REMOVE]) return;
-                        currentState = state;
-                        base = update(parent, base, props, context);
-                    },
-                    get: () => currentState
-                },
-                context
-            ),
+export function createComponent(tag, currentState, isSvg, key, components) {
+    let prevent,
+        defer = () => new Promise(resolve => setTimeout(resolve, 1000 / 60));
+    async function render(parent, base, props, context) {
+        let inRender = true;
+        let set = nextState => {
+                currentState = nextState;
+                if (!base[REMOVE] && !prevent && !inRender) {
+                    prevent = true;
+                    defer()
+                        .then(() => render(parent, base, props, context))
+                        .then(() => (prevent = false));
+                }
+            },
+            get = () => currentState;
+        base = await diff(
             parent,
             base,
+            tag(props, { set, get }, context),
             context,
-            isSvg
-        ));
+            isSvg,
+            key + 1,
+            components
+        );
+        inRender = false;
+        return base;
+    }
+    return {
+        tag,
+        render
     };
 }
 /**
@@ -82,11 +90,19 @@ export function createComponent(component, currentState, isSvg) {
  * @returns {HTMLElement} - The current node
  */
 
-export function diff(parent, node, next, context = {}, isSvg) {
+export async function diff(
+    parent,
+    node,
+    next,
+    context = {},
+    isSvg,
+    currentKey = 0,
+    currentComponents = {}
+) {
     next = isVDom(next) ? next : new VDom("", {}, [next || ""]);
 
     let base = node,
-        { prev = new VDom(), components = new Map() } = getMaster(base),
+        { prev = new VDom(), components = currentComponents } = getMaster(base),
         component,
         isCreate,
         addContext = next.props.context;
@@ -95,14 +111,21 @@ export function diff(parent, node, next, context = {}, isSvg) {
 
     isSvg = next.tag === "svg" || isSvg;
 
+    if (components[currentKey] && components[currentKey].tag !== next.tag) {
+        delete components[currentKey];
+    }
+
     if (typeof next.tag === "function") {
-        component = next.tag;
-        if (!components.has(component)) {
-            components.set(
-                component,
-                createComponent(component, next.props.state, isSvg)
+        if ((components[currentKey] || {}).tag !== next.tag) {
+            components[currentKey] = createComponent(
+                next.tag,
+                next.props.state,
+                isSvg,
+                currentKey,
+                components
             );
         }
+        component = components[currentKey];
         next = next.clone(prev.tag || (isSvg ? "g" : ""));
     }
 
@@ -126,8 +149,8 @@ export function diff(parent, node, next, context = {}, isSvg) {
         isCreate = true;
         next.emit("create", base);
     }
-    if (component && components.has(component)) {
-        return components.get(component)(parent, base, next.props, context);
+    if (component) {
+        return component.render(parent, base, next.props, context);
     } else if (!next.tag) {
         if (prev.props.children[0] !== next.props.children[0]) {
             base.textContent = String(next.props.children[0]);
@@ -153,7 +176,7 @@ export function diff(parent, node, next, context = {}, isSvg) {
         }
     }
     base[MASTER] = {
-        prev: component ? getMaster(base).prev : next,
+        prev: next,
         components
     };
 
