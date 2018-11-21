@@ -182,8 +182,7 @@ Run once the view has been rendered
 ## Examples
 
 ### [counter](https://codesandbox.io/s/lpk8wy0njz)
-
-Example that teaches how to work with the state of a component.
+### [Async render](https://codesandbox.io/s/wyv585091l)
 
 ## Accessories
 

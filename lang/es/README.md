@@ -187,8 +187,7 @@ Se ejecuta una vez ya renderizada la vista
 ## Ejemplos
 
 ### [counter](https://codesandbox.io/s/lpk8wy0njz)
-
-Ejemplo que enseña cómo trabajar con el estado de un componente.
+### [Async render](https://codesandbox.io/s/wyv585091l)
 
 ## Complementos
 
