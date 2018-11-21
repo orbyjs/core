@@ -2,6 +2,7 @@ import { VDom, isVDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h, isVDom } from "./vdom";
 
+export const FPS = 1000 / 120;
 /**
  * Master is the mark to store the previous state
  * and if the node is controlled by one or more components
@@ -12,6 +13,8 @@ export const MASTER = "__master__";
  * the property is marked as true
  */
 export const REMOVE = "__remove__";
+
+export const LISTENER = "__listeners__";
 /**
  * Special properties of virtual dom,
  * these are ignored from the diffProps process,
@@ -40,7 +43,9 @@ export function getMaster(base) {
     return (base && base[MASTER]) || {};
 }
 
-export function delay() {}
+export function defer(handler, time = FPS) {
+    setTimeout(handler, FPS);
+}
 /**
  *
  * @param {Function} component  - Function that controls the node
@@ -49,21 +54,21 @@ export function delay() {}
  * @return {HTMLElement} - Returns the current component node
  */
 export function createComponent(tag, currentState, isSvg, key, components) {
-    let prevent,
-        defer = () => new Promise(resolve => setTimeout(resolve, 1000 / 60));
-    async function render(parent, base, props, context) {
+    let prevent;
+    function render(parent, base, props, context) {
         let inRender = true;
         let set = nextState => {
                 currentState = nextState;
                 if (!base[REMOVE] && !prevent && !inRender) {
                     prevent = true;
-                    defer()
-                        .then(() => render(parent, base, props, context))
-                        .then(() => (prevent = false));
+                    defer(() => {
+                        render(parent, base, props, context);
+                        prevent = false;
+                    });
                 }
             },
             get = () => currentState;
-        base = await diff(
+        base = diff(
             parent,
             base,
             tag(props, { set, get }, context),
@@ -90,7 +95,7 @@ export function createComponent(tag, currentState, isSvg, key, components) {
  * @returns {HTMLElement} - The current node
  */
 
-export async function diff(
+export function diff(
     parent,
     node,
     next,
@@ -110,6 +115,8 @@ export async function diff(
     context = addContext ? { ...context, ...addContext } : context;
 
     isSvg = next.tag === "svg" || isSvg;
+
+    if (prev === next) return base;
 
     if (components[currentKey] && components[currentKey].tag !== next.tag) {
         delete components[currentKey];
@@ -205,10 +212,24 @@ export function diffProps(node, prev, next, isSvg) {
 
         let isFnPrev = typeof prev[prop] === "function",
             isFnNext = typeof next[prop] === "function";
-
         if (isFnPrev || isFnNext) {
-            if (isFnPrev) node.removeEventListener(prop, prev[prop]);
-            if (isFnNext) node.addEventListener(prop, next[prop]);
+            if (!isFnNext && isFnPrev) {
+                node.removeEventListener(prop, node[LISTENER][prop][0]);
+            }
+            if (isFnNext) {
+                if (!isFnPrev) {
+                    node[LISTENER] = node[LISTENER] || {};
+                    if (!node[LISTENER][prop]) {
+                        node[LISTENER][prop] = [
+                            event => {
+                                node[LISTENER][prop][1](event);
+                            }
+                        ];
+                    }
+                    node.addEventListener(prop, node[LISTENER][prop][0]);
+                }
+                node[LISTENER][prop][1] = next[prop];
+            }
         } else if (prop in next) {
             if ((prop in node && !isSvg) || (isSvg && prop === "style")) {
                 if (prop === "style") {
