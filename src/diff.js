@@ -2,6 +2,9 @@ import { VDom, isVDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h, isVDom } from "./vdom";
 
+export let options = {
+    delay: 1
+};
 /**
  * Master is the mark to store the previous state
  * and if the node is controlled by one or more components
@@ -55,7 +58,7 @@ export let IGNORE = [
  * @returns {HTMLElement} - The current node
  */
 export function render(next, parent, child, context, isSvg) {
-    return diff(parent, child, next, context, isSvg);
+    return diff(root(parent), child, next, context, isSvg);
 }
 /**
  * Gets the node's status mark
@@ -66,10 +69,8 @@ export function render(next, parent, child, context, isSvg) {
 export function getMaster(base) {
     return (base && base[MASTER]) || {};
 }
-
 export function defer(handler) {
-    requestAnimationFrame(handler);
-    //setTimeout(handler, 8.33);
+    setTimeout(handler, options.delay);
 }
 /**
  *
