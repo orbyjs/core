@@ -42,13 +42,7 @@ export let IGNORE = [
     /**
      * Defines the initial state for a component
      */
-    "state",
-    /**
-     * It allows to avoid the execution of the
-     * component the same type of label that
-     * its predecessor is conserved
-     */
-    "static"
+    "state"
 ];
 /**
  * It allows to print the status of virtual dom on the planned configuration
@@ -141,8 +135,7 @@ export function diff(
     context = addContext ? { ...context, ...addContext } : context;
 
     isSvg = next.tag === "svg" || isSvg;
-    if (prev === next || (prev.tag && next.tag && next.props.static))
-        return base;
+    if (prev === next) return base;
 
     if (components[currentKey] && components[currentKey].tag !== next.tag) {
         delete components[currentKey];
@@ -176,7 +169,7 @@ export function diff(
                 }
             }
             replace(parent, base, node);
-            if (!component) emitRemove(node);
+            if (!component && prev.tag) emitRemove(node);
         } else {
             append(parent, base);
         }
@@ -253,13 +246,14 @@ export function diffProps(node, prev, next, isSvg) {
 
     for (let i = 0; i < keys.length; i++) {
         let prop = keys[i];
-
         if (IGNORE.indexOf(prop) > -1 || prev[prop] === next[prop]) continue;
+
         if (attachShadow === prop && attachShadow in node) {
             node.attachShadow({ mode: next[prop] ? "open" : "closed" });
         }
         let isFnPrev = typeof prev[prop] === "function",
             isFnNext = typeof next[prop] === "function";
+
         if (isFnPrev || isFnNext) {
             if (!isFnNext && isFnPrev) {
                 node.removeEventListener(prop, node[LISTENER][prop][0]);
