@@ -281,7 +281,10 @@ export function diffProps(node, prev, next, isSvg) {
                         for (let prop in nextStyle) {
                             if (prevStyle[prop] !== nextStyle[prop]) {
                                 if (prop[0] === "-") {
-                                    node.setProperty(prop, nextStyle[prop]);
+                                    node.style.setProperty(
+                                        prop,
+                                        nextStyle[prop]
+                                    );
                                 } else {
                                     node.style[prop] = nextStyle[prop];
                                 }
