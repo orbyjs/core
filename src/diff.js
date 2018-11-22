@@ -2,6 +2,8 @@ import { VDom, isVDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h, isVDom } from "./vdom";
 
+let attachShadow = "attachShadow";
+
 export let options = {
     delay: 1
 };
@@ -204,12 +206,13 @@ export function diff(
                 isSvg
             );
             deep++;
-            let childNodes = Array.from(root(base).childNodes),
+            let nextParent = next.props[attachShadow] ? root(base) : base,
+                childNodes = Array.from(nextParent.childNodes),
                 length = Math.max(childNodes.length, children.length);
             for (let i = 0; i < length; i++) {
                 if (children[i]) {
                     diff(
-                        base,
+                        nextParent,
                         childNodes[i],
                         children[i],
                         context,
@@ -219,7 +222,7 @@ export function diff(
                 } else {
                     if (childNodes[i]) {
                         emitRemove(childNodes[i]);
-                        remove(base, childNodes[i]);
+                        remove(nextParent, childNodes[i]);
                     }
                 }
             }
@@ -252,7 +255,9 @@ export function diffProps(node, prev, next, isSvg) {
         let prop = keys[i];
 
         if (IGNORE.indexOf(prop) > -1 || prev[prop] === next[prop]) continue;
-
+        if (attachShadow === prop && attachShadow in node) {
+            node.attachShadow({ mode: next[prop] ? "open" : "closed" });
+        }
         let isFnPrev = typeof prev[prop] === "function",
             isFnNext = typeof next[prop] === "function";
         if (isFnPrev || isFnNext) {
