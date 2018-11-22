@@ -2,7 +2,6 @@ import { VDom, isVDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h, isVDom } from "./vdom";
 
-export let FPS = 1000 / 120;
 /**
  * Master is the mark to store the previous state
  * and if the node is controlled by one or more components
@@ -26,9 +25,6 @@ export let IGNORE = [
     "created",
     "remove",
     "removed",
-    /**
-     *
-     */
     "update",
     /**
      * It is executed once sent to the diff process to the succesors
@@ -72,8 +68,8 @@ export function getMaster(base) {
 }
 
 export function defer(handler) {
-    // requestAnimationFrame(handler);
-    setTimeout(handler, FPS);
+    requestAnimationFrame(handler);
+    //setTimeout(handler, 8.33);
 }
 /**
  *
@@ -82,47 +78,33 @@ export function defer(handler) {
  * @param {Boolean} [isSvg] - Create components for a group of svg
  * @return {HTMLElement} - Returns the current component node
  */
-export function createComponent(
-    tag,
-    currentState,
-    isSvg,
-    deep,
-    key,
-    components
-) {
-    let prevent;
-    function render(parent, base, props, context) {
-        let inRender = true;
-        let set = nextState => {
-                currentState = nextState;
-                if (!base[REMOVE] && !prevent && !inRender) {
-                    prevent = true;
+export function Component(tag, state, isSvg, deep, key, components) {
+    this.tag = tag;
+    this.state = state;
+    this.context = {};
+    this.prevent = false;
+    this.render = (parent, base) => {
+        let set = state => {
+                this.state = state;
+                if (!base[REMOVE] && !this.prevent) {
+                    this.prevent = true;
                     defer(() => {
-                        render(parent, base, props, context);
-                        prevent = false;
+                        this.render(parent, base);
+                        this.prevent = false;
                     });
                 }
             },
-            get = () => currentState;
-        base = diff(
+            get = () => this.state;
+        return (base = diff(
             parent,
             base,
-            tag(props, { set, get }, context),
-            context,
+            this.tag(this.props, { set, get }, this.context),
+            this.context,
             isSvg,
-            deep,
+            deep + 1,
             key + 1,
             components
-        );
-        inRender = false;
-        return base;
-    }
-    return {
-        tag,
-        render,
-        get prevent() {
-            return prevent;
-        }
+        ));
     };
 }
 /**
@@ -165,7 +147,7 @@ export function diff(
 
     if (typeof next.tag === "function") {
         if ((components[currentKey] || {}).tag !== next.tag) {
-            components[currentKey] = createComponent(
+            components[currentKey] = new Component(
                 next.tag,
                 next.props.state,
                 isSvg,
@@ -191,7 +173,7 @@ export function diff(
                 }
             }
             replace(parent, base, node);
-            emitRemove(node);
+            if (!component) emitRemove(node);
         } else {
             append(parent, base);
         }
@@ -199,8 +181,12 @@ export function diff(
         next.emit("create", base);
     }
     if (component) {
-        if (deep && component.prevent) return base;
-        return component.render(parent, base, next.props, context);
+        component.props = next.props;
+        component.context = context;
+        if (deep && component.prevent) {
+            return base;
+        }
+        return component.render(parent, base);
     } else if (!next.tag) {
         if (prev.props.children[0] !== next.props.children[0]) {
             base.textContent = String(next.props.children[0]);
