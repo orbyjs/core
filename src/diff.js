@@ -2,25 +2,53 @@ import { VDom, isVDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h, isVDom } from "./vdom";
 
-export const FPS = 1000 / 120;
+export let FPS = 1000 / 120;
 /**
  * Master is the mark to store the previous state
  * and if the node is controlled by one or more components
  */
-export const MASTER = "__master__";
+export let MASTER = "__master__";
 /**
  * Each time a component is removed from the dom,
  * the property is marked as true
  */
-export const REMOVE = "__remove__";
+export let REMOVE = "__remove__";
 
-export const LISTENER = "__listeners__";
+export let LISTENER = "__listeners__";
 /**
  * Special properties of virtual dom,
  * these are ignored from the diffProps process,
  * since it is part of the component's life cycle
  */
-export const IGNORE = ["children", "create", "remove", "context", "state"];
+export let IGNORE = [
+    "children",
+    "create",
+    "created",
+    "remove",
+    "removed",
+    /**
+     *
+     */
+    "update",
+    /**
+     * It is executed once sent to the diff process to the succesors
+     */
+    "updated",
+    /**
+     * Create a new context for successors
+     */
+    "context",
+    /**
+     * Defines the initial state for a component
+     */
+    "state",
+    /**
+     * It allows to avoid the execution of the
+     * component the same type of label that
+     * its predecessor is conserved
+     */
+    "static"
+];
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {VDom} next - the next state of the node
@@ -43,7 +71,8 @@ export function getMaster(base) {
     return (base && base[MASTER]) || {};
 }
 
-export function defer(handler, time = FPS) {
+export function defer(handler) {
+    // requestAnimationFrame(handler);
     setTimeout(handler, FPS);
 }
 /**
@@ -53,7 +82,14 @@ export function defer(handler, time = FPS) {
  * @param {Boolean} [isSvg] - Create components for a group of svg
  * @return {HTMLElement} - Returns the current component node
  */
-export function createComponent(tag, currentState, isSvg, key, components) {
+export function createComponent(
+    tag,
+    currentState,
+    isSvg,
+    deep,
+    key,
+    components
+) {
     let prevent;
     function render(parent, base, props, context) {
         let inRender = true;
@@ -74,6 +110,7 @@ export function createComponent(tag, currentState, isSvg, key, components) {
             tag(props, { set, get }, context),
             context,
             isSvg,
+            deep,
             key + 1,
             components
         );
@@ -82,7 +119,10 @@ export function createComponent(tag, currentState, isSvg, key, components) {
     }
     return {
         tag,
-        render
+        render,
+        get prevent() {
+            return prevent;
+        }
     };
 }
 /**
@@ -101,6 +141,7 @@ export function diff(
     next,
     context = {},
     isSvg,
+    deep = 0,
     currentKey = 0,
     currentComponents = {}
 ) {
@@ -115,8 +156,8 @@ export function diff(
     context = addContext ? { ...context, ...addContext } : context;
 
     isSvg = next.tag === "svg" || isSvg;
-
-    if (prev === next) return base;
+    if (prev === next || (prev.tag && next.tag && next.props.static))
+        return base;
 
     if (components[currentKey] && components[currentKey].tag !== next.tag) {
         delete components[currentKey];
@@ -128,6 +169,7 @@ export function diff(
                 next.tag,
                 next.props.state,
                 isSvg,
+                deep,
                 currentKey,
                 components
             );
@@ -157,6 +199,7 @@ export function diff(
         next.emit("create", base);
     }
     if (component) {
+        if (deep && component.prevent) return base;
         return component.render(parent, base, next.props, context);
     } else if (!next.tag) {
         if (prev.props.children[0] !== next.props.children[0]) {
@@ -167,12 +210,25 @@ export function diff(
             isCreate ||
             next.emit("update", base, prev.props, next.props) !== false
         ) {
-            diffProps(base, prev.props, next.props, isSvg);
+            diffProps(
+                base,
+                next.tag === prev.tag ? prev.props : {},
+                next.props,
+                isSvg
+            );
+            deep++;
             let childNodes = Array.from(root(base).childNodes),
                 length = Math.max(childNodes.length, children.length);
             for (let i = 0; i < length; i++) {
                 if (children[i]) {
-                    diff(base, childNodes[i], children[i], context, isSvg);
+                    diff(
+                        base,
+                        childNodes[i],
+                        children[i],
+                        context,
+                        isSvg,
+                        deep
+                    );
                 } else {
                     if (childNodes[i]) {
                         emitRemove(childNodes[i]);
@@ -208,7 +264,7 @@ export function diffProps(node, prev, next, isSvg) {
     for (let i = 0; i < keys.length; i++) {
         let prop = keys[i];
 
-        if (prev[prop] === next[prop] || IGNORE.indexOf(prop) > -1) continue;
+        if (IGNORE.indexOf(prop) > -1 || prev[prop] === next[prop]) continue;
 
         let isFnPrev = typeof prev[prop] === "function",
             isFnNext = typeof next[prop] === "function";
@@ -245,7 +301,7 @@ export function diffProps(node, prev, next, isSvg) {
                                 }
                             }
                         }
-                        next[prop] = { ...prevStyle, ...nextStyle };
+                        // next[prop] = { ...prevStyle, ...nextStyle };
                     } else {
                         node.style.cssText = next[prop];
                     }
