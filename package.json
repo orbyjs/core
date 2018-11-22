@@ -1,7 +1,7 @@
 {
   "name": "@orby/core",
   "description": "Orby is a small experiment of functional components based on virtual-dom.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "dist/orby.js",
   "module": "dist/orby.m.js",
   "umd:main": "dist/orby.umd.js",
@@ -13,11 +13,11 @@
     "url": "https://github.com/orby-js/core.git"
   },
   "scripts": {
-    "watch": "rollup -c -w",
+    "watch": "microbundle -w --name @orby/core",
     "test": "jest",
-    "build": "rollup -c",
+    "build": "microbundle --name @orby/core",
     "prepare": "npm run build && npm test",
-    "upload" : "npm publish --access public"
+    "upload": "npm publish --access public"
   },
   "devDependencies": {
     "@babel/core": "^7.1.5",
@@ -26,11 +26,8 @@
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
     "jest": "^23.6.0",
-    "regenerator-runtime": "^0.12.1",
-    "rollup": "^0.66.6",
-    "rollup-plugin-babel": "^4.0.3",
-    "rollup-plugin-filesize": "^5.0.1",
-    "rollup-plugin-terser": "1.0.1"
+    "microbundle": "^0.7.0",
+    "regenerator-runtime": "^0.12.1"
   },
   "babel": {
     "plugins": [
