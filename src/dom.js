@@ -9,14 +9,14 @@ export function create(tag, isSvg) {
 export function root(parent) {
     return parent.shadowRoot || parent;
 }
-export function remove(parent, child, useShadowRoot) {
+export function remove(parent, child) {
     parent.removeChild(child);
 }
 
-export function append(parent, child, useShadowRoot) {
+export function append(parent, child) {
     parent.appendChild(child);
 }
 
-export function replace(parent, newChild, oldChild, useShadowRoot) {
+export function replace(parent, newChild, oldChild) {
     parent.replaceChild(newChild, oldChild);
 }
