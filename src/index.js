@@ -1,10 +1,1 @@
-export {
-    render,
-    h,
-    isVDom,
-    options,
-    MASTER,
-    LISTENER,
-    REMOVE,
-    IGNORE
-} from "./diff";
+export { render, h, options } from "./diff";
