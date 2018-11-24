@@ -43,26 +43,14 @@ export function h(tag, props, ...children) {
     return new VDom(tag || "", props, concat(children));
 }
 /**
- * Verify if this is a virtual node
- * @param {*} value
- * @return {Boolean}
- */
-export function isVDom(value) {
-    return typeof value === "object" && value instanceof VDom;
-}
-/**
  * Clean existing values in virtual-dom tree
  * @param {*} children
  * @param {*} merge
  */
-export function concat(children, merge = []) {
+export function concat(children, next = []) {
     for (let i = 0; i < children.length; i++) {
-        let child = children[i];
-        Array.isArray(child)
-            ? concat(child, merge)
-            : merge.push(
-                  isVDom(child) ? child : new VDom("", {}, [child || ""])
-              );
+        let value = children[i];
+        Array.isArray(value) ? concat(value, next) : next.push(value);
     }
-    return merge;
+    return next;
 }
