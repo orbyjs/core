@@ -2,11 +2,10 @@ import { VDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h } from "./vdom";
 
-let attachShadow = "attachShadow";
-
 export let options = {
     delay: 1
 };
+
 export let COMPONENTS = "__components__";
 /**
  * Master is the mark to store the previous state
@@ -26,7 +25,7 @@ export let LISTENERS = "__listeners__";
  * since it is part of the component's life cycle
  */
 
-export let IGNORE = /^(context|state|children|(create|update|remove)(d){0,1}|)$/;
+export let IGNORE = /^(context|state|children|(create|update|remove)(d){0,1}|xmlns)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {VDom} next - the next state of the node
@@ -174,7 +173,7 @@ export function diff(
                 next.props,
                 isSvg
             );
-            let nextParent = next.props[attachShadow] ? root(base) : base,
+            let nextParent = next.props.scoped ? root(base) : base,
                 childNodes = nextParent.childNodes,
                 move = 0,
                 length = Math.max(children.length, childNodes.length);
@@ -222,9 +221,11 @@ export function diffProps(node, prev, next, isSvg) {
 
         define[prop] = true;
 
-        if (attachShadow === prop && attachShadow in node) {
+        if ("scoped" === prop && "attachShadow" in node) {
             node.attachShadow({ mode: next[prop] ? "open" : "closed" });
+            continue;
         }
+
         let isFnPrev = typeof prev[prop] === "function",
             isFnNext = typeof next[prop] === "function";
 
