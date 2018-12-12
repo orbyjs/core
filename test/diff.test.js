@@ -55,7 +55,7 @@ describe("diff", () => {
         let id = 100,
             cd = 200;
 
-        function Child(props, state, c  ontext) {
+        function Child(props, state, context) {
             expect(context).toEqual({ id, cd });
         }
 
@@ -66,7 +66,7 @@ describe("diff", () => {
                 </div>
             );
         }
-        
+
         render(
             <div context={{ id }}>
                 <Parent />
