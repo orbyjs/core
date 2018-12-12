@@ -8,17 +8,17 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
 2. [JSX](#jsx)
     1. [JSX Assignment of events](#jsx-assignment-of-events)
 3. [Component](#component)
-    1. [Propiedades del componente](#propiedades-del-componente)
-    2. [Estado del componente](#estado-del-componente)
-    3. [Contexto en componente](#contexto-en-componente)
-4. [Ciclo de vida](#ciclo-de-vida)
+    1. [Properties of the component](#properties-of-the-component)
+    2. [Control of component status](#control-of-component-status)
+    3. [Control of the context of the component](#control-of-the-context-of-the-component)
+4. [Lifecycle](#lifecycle)
     1. [create](#create)
     2. [created](#created)
     3. [remove](#remove)
     4. [removed](#removed)
     5. [update](#update)
     6. [updated](#updated)
-5. [Propiedades especiales](#propiedades-especiales)
+5. [Special properties](#special-properties)
     1. [scoped](#scoped)
     2. [state](#state)
     3. [context](#context)
@@ -92,7 +92,7 @@ export function	Button(props){
 
 The design pattern of purely functional components does not change if you were only limited to the use of Props.
 
-### Component status
+### Control of component status
 
 What Orby proposes, is the use of functional components, to facilitate the manipulation of the state there is a second argument, this second argument has 2 methods:
 
@@ -117,7 +117,7 @@ Another important point of state management, is the definition of the initial st
 <Button state={true}/>
 ```
 
-### Context in component
+### Control of the context of the component
 
 The context allows you to share a defined object at a higher level, it will be very useful if you look for interaction between 2 components.
 
