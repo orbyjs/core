@@ -28,4 +28,50 @@ describe("diff", () => {
 
         expect(document.body.querySelector("#button").textContent).toBe(label);
     });
+
+    test("context static", () => {
+        let id = 100;
+
+        function Child(props, state, context) {
+            expect(context.id).toBe(id);
+        }
+
+        function Parent(props, state, context) {
+            return (
+                <div>
+                    <Child />
+                </div>
+            );
+        }
+
+        render(
+            <div context={{ id }}>
+                <Parent />
+            </div>,
+            document.body
+        );
+    });
+    test("context dinamic", () => {
+        let id = 100,
+            cd = 200;
+
+        function Child(props, state, c  ontext) {
+            expect(context).toEqual({ id, cd });
+        }
+
+        function Parent(props, state, context) {
+            return (
+                <div context={{ cd }}>
+                    <Child />
+                </div>
+            );
+        }
+        
+        render(
+            <div context={{ id }}>
+                <Parent />
+            </div>,
+            document.body
+        );
+    });
 });

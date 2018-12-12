@@ -1,223 +1,270 @@
-
 <img src="../../assets/logo.png" width="280px"/> 
 
-# @orby/core
+Orby es una pequeña y minimalista librería para crear interfaces modernas a base de JSX, Virtual-Dom y Funciones.
 
-**Orby** es una pequeño experimento de componentes funcionales basados en JSX y virtual-dom.
+## Índice
 
-[![Counter](../../assets/counter.png)](https://codesandbox.io/s/lpk8wy0njz)
+1. [Motivacion](#motivación)
+2. [JSX](#jsx)
+    1. [JSX Asignacion de eventos](#jsx-asignación-de-eventos)
+3. [Componente](#componente)
+    1. [Propiedades del componente](#propiedades-del-componente)
+    2. [Estado del componente](#estado-del-componente)
+    3. [Contexto en componente](#contexto-en-componente)
+4. [Ciclo de vida](#ciclo-de-vida)
+    1. [create](#create)
+    2. [created](#created)
+    3. [remove](#remove)
+    4. [removed](#removed)
+    5. [update](#update)
+    6. [updated](#updated)
+5. [Propiedades especiales](#propiedades-especiales)
+    1. [scoped](#scoped)
+    2. [state](#state)
+    3. [context](#context)
+6. [Ejemplos](#ejemplos)
 
-> **Orby**, se encarga de mantener un estado único para cada componente funcional.
+## Motivación
 
-## Argumentos del componente
+Simplificar la creación y mantención de componentes, limitando su alcance solo funciones, evitando la utilización de clases, con el objetivo de simplificar la curva de aprendizaje centrada solo en el uso de funciónes y Jsx.
 
-Un componente a base de **Orby**, puede leer 3 argumentos.
+Otra motivación es el aprovechamiento del shadow-dom, como parte del proceso de detección de cambios. Ejemplo de esto es la creación de un componente con alcance de estilo gracias al uso del **shadow-dom**, favor vea el siguiente ejemplo y note la definición de la propiedad [scoped](#scoped).
 
-1. **props** : Propiedades asociadas al componente.
-2. **state** : Controlador del estado del componente.
-3. **context** : Contexto dado al componente desde un nivel superior.
-
-```js
-function Component(props,state,context){
-  return <div>
-      {props.children}
-  </div>
+```jsx
+function Button(props){
+    return <button scoped>
+        <style>{`
+            :host{
+                padding : .5rem 1rem;
+                border:none;
+                background:black;
+                color:white
+            }
+        `}</style>   
+        {props.children}
+    </button>
 }
 ```
 
-### Props
+El componente `<Button/>` quedara asilado en el árbol de Dom, esto definirá un alcance cerrado de estilos css. 
 
-Objeto de propiedades asociadas a la definición del componente:
+## JSX
 
-```js
-<Component id="10">
-   <h1>sample</h1> 
-</Component>
+[JSX](https://reactjs.org/docs/introducing-jsx.html) se define como una extensión de la sintaxis de JavaScript, esta permite mantener una unión legible entre el HTML y JS, para luego ser usada por ejemplo en la manipulación de nodos, asignación de eventos, mutación de atributos y más.
 
+Al momento de trabajar con Orby, por favor considere las siguientes diferencias con otras bibliotecas como React, en :
+
+1. **asignación de eventos** sin prefijo `on`
+2. **nulo soporte a fragmentos**, los componentes de Orby se apegan mas a la definición de un árbol manteniendo siempre un nodo de raiz, esto es por como se expresa el [ciclo de vida](#ciclo-de-vida).
+3. **nulo soporte a key**, entiendo que en algunos casos las keys pueden incrementar la performance, pero en el contexto generar son escasamente usadas y mal interpretadas. 
+
+> Orby posee una api propia, la asociacion y comparativa con otras librerias en homologar api depende de una analisis utilitario en la experiencia de usuario
+
+### JSX asignación de eventos
+
+Para asignar eventos por ejemplo a un botón, no requiere prefijos sobre el nombre del evento, el proceso de DIFF al detectar una función como propiedad del nodo, la definirá la propiedad como evento.
+
+El siguiente ejemplo enseña como Orby añade un evento a un `<button/>`
+
+```jsx
+<button click={handler}/>
 ```
-> las propiedades del componente serán `{id:"10",children:[...]}`
 
-### State
+Esto es muy ventajoso al momento de trabajar con CustomEvents, ya que Orby no manipula los nombres.
 
-El estado de cada componente se lee mediante el uso de `state.get()` y se actualiza mediante el uso de `state.set()`.
+```jsx
+<web-component myCustomEvent={handler}/>
+```
 
-```js
-function Component(props,state,context){
-  return <button click={()=>state.set("Orby")}>
-      Hi {state.get()||""}
-  </button>
+## Componente
+
+Espero que trabajar con Orby le resulte simple, me he esforzado en que la api sea eficiente ante el proceso de DIFF.
+
+### Propiedades del componente
+
+Al igual que cualquier componente funcional, el primer argumento del componente siempre serán sus propiedades
+
+```jsx
+export function	Button(props){
+    return <button click={props.click}>{props.children}</button>
 }
 ```
 
-Puede usar `{set,get}` para acceder directamente a `state.set` y `state.get`.
+El patrón de diseño de componentes puramente funcionales no cambia si ud solo se limitara al uso de Props
 
-**Orby**, permite una definición de estado inicial de forma externa, mediante la propiedad `state=<any>`, asociada al componente.
+### Estado del componente
 
-```js
-function App(props , {get}){
-   get()// [1,2,3,4,5]
-   return <button>Orby</button>;
+Lo que propone Orby, es el uso de componentes funcionales, para facilitar la manipulación del estado existe un segundo argumento, este segundo argumento posee 2 métodos:
+
+1. **set**, actualiza el estado del componente y renderiza el nuevo estado
+2. **get**, obtiene el estado actual del componente
+
+El siguiente ejemplo enseña como generar un toggle de contenido, mediante la manipulación del estado.
+
+```jsx
+export function	Button(props,state){
+    return <button click={()=>{
+        state.set( !state.get() )
+    }}>{state.get() ? props.children : undefined}</button>
 }
-
-<App state={[1,2,3,4,5]}/>
 ```
 
-### Context
+el estado puede ser el que ud determine, Orby no obliga a que este sea siempre objeto.
 
-Ud puede compartir estados mediante el uso de la propiedad `context=<object>`, asociada al componente.
+Otro punto importante del manejo del estado, es la asociacion de estado inicial del componente, el que puede ser definido como una propiedad  del mismo`state={<initialState>}`, vea el siguiente ejemplo:
 
-```js
+```jsx
+<Button state={true}/>
+```
+
+### Contexto en componente
+
+El contexto permite compartir un objeto definido a nivel superior, le resultara sumamente útil si busca interacción entre 2 componentes.
+
+```jsx
+export function	Button(props,state,context){
+    return <button>{context.message}</button>
+}
+```
+
+Otro punto importante es que el manejo del contexto puede ser definido mediante el uso de la propiedad `context` de forma externa al componente.
+
+```jsx
+import {h,render} from "@orby/core";
+import App from "./app";
+
 render(
-  <App context={{parent:[1,2,3]}}/>,
-  document.querySelector("#app")
-)
+    <App context={{message:"hi! Orby"}}/>,
+    document.querySelector("#app")
+);
 ```
-
-Ud puede definir un contexto inicial simplemente como propiedad
-
-```js
-function App(){
-  return <OtherComponent context={{parent:[1,2,3]}}/>
-}
-```
-
-Ud puede modificar el contexto simplemente definiéndolo como una propiedad.
-
-### Children
-
-A diferencia de `React`, **Orby** fuerza que todo hijo asociado al componente será un nodo virtual.
-
-Como autor no encuentro coherente el uso de `props.children[0]`, para acceder a una función asociada al hijo.
-
-```js
-<App>
-{()=>{
-  /** no funcionara **/
-}}
-</App>
-```
-
-Recomiendo fuertemente asociarla a una propiedad ya que a juicio de autor encuentro más legible, y se adapta a la mejor a la definición y comprobación de tipos.
-
-```js
-<App fun={()=>{
-
-}}/>
-```
-
-### Componentes de alto orden
-
-**Orby** utiliza `Map` sobre el nodo, para almacenar la función asociada al componente, ud puede compartir entre múltiples componentes un nodo específico del documento sin problema alguno.
-
-> **Advertencia**, favor no cree intente crear componentes locales dentro del componente, ya que esto impide que se almacene el estado del mismo.
 
 ## Ciclo de vida
 
-**Orby** posee un ciclo de vida inspirado en [Hyperapp](https://github.com/jorgebucaran/hyperapp).
+El ciclo de vida no existe en si sobre el componente, este se manifiesta sobre los nodo creados, esto es similar a como opera en [Hyperapp](https://github.com/jorgebucaran/hyperapp).
+
+```jsx
+export function Button(){
+    return <button create={handlerWithCreate}>Hi! Orby</button>
+}
+```
+
+El proceso de DIFF invocara la propiedades `create` solo cuando el nodo `<button/>` se cree en el árbol de dom. Ud puede añadir las propiedad de ciclo de vida a los nodos que estime conveniente.
 
 ### create
 
-Se ejecuta una vez que se crea el tag.
+La propiedad `create`  se invoca  cuando el nodo se añade en el árbol de dom.
 
-```js
-<h1 create={(target:HTMLElement)=>{
-  /** any **/
-}}>
-  Orby
-</h1>
+```jsx
+export function Button(){
+    return <button create={(target:HTMLElement)=>{
+    	/**algorithm**/
+	}}>Hi! Orby</button>
+}
 ```
 
 ### created
 
-Se ejecuta una vez creado el arbol de nodos asociado al tag.
+La propiedad `created`  se invoca  luego de que el nodo se añadió al árbol de dom y propago los cambios hacia sus hijos.
 
-```js
-<h1 created={(target:HTMLElement)=>{
-  target.querySelector("button");
-}}>
-  <button>Orby</button>  
-</h1>
+```jsx
+export function Button(){
+    return <button created={(target:HTMLElement)=>{
+    	/**algorithm**/
+	}}>Hi! Orby</button>
+}
 ```
 
 ### remove
 
-Se ejecuta una vez que ha sido eliminado del nodo principal la etiqueta.
+La propiedad `remove`  se invoca  al eliminar el nodo del arbol de dom.
 
-```js
-<h1 remove={(target:HTMLElement)=>{
-  /** any **/
-}}>
-  Orby
-</h1>
+```jsx
+export function Button(){
+    return <button remove={(target:HTMLElement)=>{
+    	/**algorithm**/
+	}}>Hi! Orby</button>
+}
 ```
+
 ### removed
 
-Se ejecuta una vez emitido el evento remove a todos los hijos del nodo.
-```js
-<h1 removed={(target:HTMLElement)=>{
-  /** any **/
-}}>
-  Orby
-</h1>
+La propiedad `removed`  se invoca  luego de eliminar el nodo del arbol de dom y propagar los cambios hacia sus hijos.
+
+```jsx
+export function Button(){
+    return <button removed={(target:HTMLElement)=>{
+    	/**algorithm**/
+	}}>Hi! Orby</button>
+}
 ```
 
 ### update
 
-Se ejecuta una vez que se renderiza la vista asociada a la etiqueta, si update retorna `false`, no propagara el cambio a sus hijos.
+La propiedad `update` se invoca  antes de propagar del nodo del arbol de dom. **retorne`false` para evitar tal propagación**
 
-```js
-<h1 update={(props:Object, target:HTMLElement)=>{
-  /** any **/
-}}>
-   Orby
-</h1>
+```jsx
+export function Button(){
+    return <button update={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
+    	/**algorithm**/
+	}}>Hi! Orby</button>
+}
 ```
+
 ### updated
 
-Se ejecuta una vez ya renderizada la vista
+La propiedad `updated` se invoca  luego de propagar del nodo del arbol de dom. 
 
-```js
-<h1 update={( target:HTMLElement)=>{
-  target.querySelector("button");
-}}>
-  <button>Orby</button>  
-</h1>
+```jsx
+export function Button(){
+    return <button updated={(target:HTMLElement)=>{
+    	/**algorithm**/
+	}}>Hi! Orby</button>
+}
 ```
+
+### Propiedades especiales
+
+### scoped
+
+la propiedad `scoped` permite habilitar el uso de `shadow-dom` sobre el nodo, al definir scoped como verdadero, el proceso de DIFF, entenderá que los nodos se montaran en el `shadowRoot` del nodo.
+
+```jsx
+export function Button(props){
+    return <button scoped>
+        <style>{`:host{background:crimson}`}</style>	
+        {props.children}
+    </button>
+}
+```
+
+### state
+
+La propiedad `state`, permite definir el estado inicial de un componente de forma externa al mismo componente.
+
+```jsx
+<Button state={10}/>
+```
+
+Al usar dentro del componente `<Button/>`, la función `state.get()`, el retorno será lo asignado como propiedad `state={10}`.
+
+### context
+
+la propiedad `context`, permite añadir nuevas propiedades al contexto.
+
+```jsx
+<ParentComponent context={{title:"Hi! Orby"}}>
+    <ChildComponent></ChildComponent>
+</ParentComponent>
+```
+
+El componente  de ejemplo `ChildComponent`, puede hacer uso del contexto definido de forma superior. Note que no es necesario ingresar al componente para crear contextos. 
 
 ## Ejemplos
 
-### [counter](https://codesandbox.io/s/lpk8wy0njz)
-### [Async render](https://codesandbox.io/s/wyv585091l)
+| Ejemplo    | Detalle                                               | Repo | Demo |
+| ---------- | ----------------------------------------------------- | ---- | ---- |
+| Counter    | Ejemplo básico de un contador con Orby                |      |      |
+| Todo       | Enseña como crear un Todolist usando Orby             |      |      |
+| Orby y Css | Permite crear componentes estilizados de forma simple |      |      |
 
-## Complementos
-
-## @orby/tag
-
-Permite encapsular todo el efecto de render dentro de un **custom-element**.
-
-```js
-import {h} from "@orby/core";
-import define from "@orby/tag";
-import Counter from "./components/counter";
-
-define(
-    <my-counter
-        props={["state"]}
-        render={Counter}
-    />
-);
-```
-
-Finalmente ud podrá usar `<my-counter/>` sin problemas dentro de su **html**
-
-```html
-<my-counter state="0"></my-counter>
-<my-counter state="10"></my-counter>
-<my-counter state="20"></my-counter>
-```
-
-## Próximamente...
-
-### @orby/router
-### @orby/store
-### @orby/style

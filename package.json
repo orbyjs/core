@@ -1,7 +1,7 @@
 {
   "name": "@orby/core",
   "description": "Orby is a small experiment of functional components based on virtual-dom.",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "main": "dist/orby.js",
   "module": "dist/orby.m.js",
   "umd:main": "dist/orby.umd.js",
@@ -10,7 +10,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/orby-js/core.git"
+    "url": "https://github.com/orbyjs/core.git"
   },
   "scripts": {
     "watch": "microbundle -w --name @orby/core",
