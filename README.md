@@ -1,4 +1,4 @@
-<img src="../../assets/logo.png" width="280px"/> 
+<img src="assets/logo.png" width="280px"/> 
 
 Orby is a small and minimalist library to create modern interfaces based on JSX, Virtual-Dom and Functions.
 
@@ -22,7 +22,7 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     1. [scoped](#scoped)
     2. [state](#state)
     3. [context](#context)
-6. [Ejemplos](#ejemplos)
+6. [Examples](#examples)
 
 ## Motivation
 
