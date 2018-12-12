@@ -85,6 +85,10 @@ export function Component(tag, state, isSvg, deep, key, components) {
  * @param {VDom} next - the next state of the node
  * @param {Object} [context] - the context of the node
  * @param {boolean} [isSvg] - check if the node belongs to a svg unit, to control it as such
+ * @param {number} [deep] - this is a depth marker used to generate an index to store the state of the component
+ * @param {number} [currentKey] - when generating a component of high order, it has a currentKey
+ *                                other than 0, this allows to point to the state of the component correctly
+ * @param {object} [currentComponents] - the functional components are stored in an object created by the first component
  * @returns {HTMLElement} - The current node
  */
 
@@ -102,7 +106,8 @@ export function diff(
         components = (node && node[COMPONENTS]) || currentComponents,
         base = node,
         isCreate,
-        component;
+        component,
+        withUpdate = true;
 
     if (prev === next) return base;
 
@@ -163,10 +168,9 @@ export function diff(
         }
         return component.render(parent, base);
     } else if (next.tag) {
-        if (
-            isCreate ||
-            next.emit("update", base, prev.props, next.props) !== false
-        ) {
+        withUpdate =
+            next.emit("update", base, prev.props, next.props) !== false;
+        if (isCreate || withUpdate) {
             diffProps(
                 base,
                 prev.tag === next.tag ? prev.props : {},
@@ -180,7 +184,13 @@ export function diff(
             for (let i = 0; i < length; i++) {
                 let childI = i - move;
                 if (i in children) {
-                    diff(nextParent, childNodes[childI], children[i], isSvg);
+                    diff(
+                        nextParent,
+                        childNodes[childI],
+                        children[i],
+                        context,
+                        isSvg
+                    );
                 } else {
                     remove(nextParent, childNodes[childI]);
                     move++;
@@ -193,7 +203,7 @@ export function diff(
         }
     }
 
-    base[PREVIOUS] = next;
+    base[PREVIOUS] = withUpdate ? next : prev;
     base[COMPONENTS] = components;
 
     next.emit(isCreate ? "created" : "updated", base);
