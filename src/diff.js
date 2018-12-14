@@ -69,7 +69,7 @@ export function Component(tag, state, isSvg, deep, key, components) {
         return (base = diff(
             parent,
             base,
-            this.tag(this.props, { set, get }, this.context),
+            this.tag(this.props, { set, get, context: this.context }),
             this.context,
             isSvg,
             deep + 1,
