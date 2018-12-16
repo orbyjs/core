@@ -1,1 +1,1 @@
-export { render, h, options } from "./diff";
+export { render, h, options, useState, useEffect } from "./diff";
