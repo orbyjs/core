@@ -18,11 +18,14 @@ Orby es una pequeña y minimalista librería para crear interfaces modernas a ba
     4. [removed](#removed)
     5. [update](#update)
     6. [updated](#updated)
-5. [Propiedades especiales](#propiedades-especiales)
+5. [Hooks](#hooks)
+    1. [useState](#useState)
+    2. [useEffect](#useEffect)
+6. [Propiedades especiales](#propiedades-especiales)
     1. [scoped](#scoped)
     2. [state](#state)
     3. [context](#context)
-6. [Ejemplos](#ejemplos)
+7. [Ejemplos](#ejemplos)
 
 ## Motivación
 
@@ -92,37 +95,12 @@ export function	Button(props){
 
 El patrón de diseño de componentes puramente funcionales no cambia si ud solo se limitara al uso de Props
 
-### Estado del componente
-
-Lo que propone Orby, es el uso de componentes funcionales, para facilitar la manipulación del estado existe un segundo argumento, este segundo argumento posee 2 métodos:
-
-1. **set**, actualiza el estado del componente y renderiza el nuevo estado
-2. **get**, obtiene el estado actual del componente
-
-El siguiente ejemplo enseña como generar un toggle de contenido, mediante la manipulación del estado.
-
-```jsx
-export function	Button(props,state){
-    return <button click={()=>{
-        state.set( !state.get() )
-    }}>{state.get() ? props.children : undefined}</button>
-}
-```
-
-el estado puede ser el que ud determine, Orby no obliga a que este sea siempre objeto.
-
-Otro punto importante del manejo del estado, es la asociacion de estado inicial del componente, el que puede ser definido como una propiedad  del mismo`state={<initialState>}`, vea el siguiente ejemplo:
-
-```jsx
-<Button state={true}/>
-```
-
 ### Contexto en componente
 
 El contexto permite compartir un objeto definido a nivel superior, le resultara sumamente útil si busca interacción entre 2 componentes.
 
 ```jsx
-export function	Button(props,state,context){
+export function	Button(props,context){
     return <button>{context.message}</button>
 }
 ```
@@ -141,7 +119,7 @@ render(
 
 ## Ciclo de vida
 
-El ciclo de vida no existe en si sobre el componente, este se manifiesta sobre los nodo creados, esto es similar a como opera en [Hyperapp](https://github.com/jorgebucaran/hyperapp).
+El ciclo de vida  se manifiesta sobre el virtual-dom en la creación, actualización y eliminación de los nodos creados, esto es similar a como opera en [Hyperapp](https://github.com/jorgebucaran/hyperapp).
 
 ```jsx
 export function Button(){
@@ -223,6 +201,86 @@ export function Button(){
 }
 ```
 
+## Hooks
+
+Los hooks son una poderosa forma de extender el comportamiento de un componente funcional creado con **Orby**, esta es una pequeña implementación basada en  los [Hooks de React](https://reactjs.org/docs/hooks-intro.html), considere también conocer bien las [reglas asociadas al uso de Hooks](https://reactjs.org/docs/hooks-rules.html)
+
+### ¿Por que hooks?
+
+Los hooks son una poderosa forma de independizar lógica del componente funcional, ud puede crear efectos personalizados que se vinculen al componente solo con la invocación, es tal la vinculación que dichos efectos logran controlar el estado del componente sin la necesidad de conocer al mismo.
+
+### useState
+
+Permite usar un estado y asociarlo al componente, por defecto los componentes en Orby no poseen estado  ya que son funciones, si ud requiere un componente que pueda manipular cambios a base de un estado puede usar `useState` dentro del componente tantas veces estime conveniente. `useState` anexara  el control de estado solo cuando este se invoque dentro del componente
+
+> A diferencia de `useState` de React, este retorna en el arreglo un 3 argumento, este posee la finalidad de obtener el estado en comportamientos asíncronos, su uso es opcional.
+
+```jsx
+import {h,useState} from "@orby/core";
+export function Button(){
+    let [state,useState,getState] = useState();
+}
+```
+
+Note que `useState` retorna un arreglo, el que ud mediante el uso de [Destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) puede asociar a una variable,  `useState` también admite un primer argumento el que define el estado inicial.
+
+```jsx
+import {h,useState} from "@orby/core";
+
+export function Button(){
+    let [count,setCount] = useState(0);
+}
+```
+
+si este primer argumento es una función, se ejecutara solo al inicializar el estado del componente.
+
+```jsx
+import {h,useState} from "@orby/core";
+function createState(){
+    return {data:[]};
+}
+export function Button(){
+    let [state,useState,getState] = useState(createState);
+}
+```
+
+
+
+### useEffect	
+
+Permite la ejecución de una función tantas veces se ejecute el componente, esta función se ejecuta luego del proceso de render asociado a parchar los cambios del nodo. 
+
+Es mas fácil entender a la ejecución de `useEffect` asociándola a los métodos de ciclo de vida del virtual-dom [created ](#created ) y [updated ](#updated )y [remove](#remove).
+
+```jsx
+import {h,useEffect} from "@orby/core";
+
+export function Button(){
+    const [count, setCount] = useState(0);
+    useEffect(()=>{
+       document.title = `clicked ${count}`;
+    });
+    return <button click={()=>setCount(count+1)}>increment</button>;
+}
+```
+
+si ud busca asimilar la ejecución del evento  [remove](#remove) del virtual-dom dentro de `useEffect`, la función asociada a `useEffect` deberá retornar una función.
+
+```jsx
+export function Button(props,context){
+ 	const [count, setCount] = useState(0);
+    useEffect(()=>{
+       document.title = `clicked ${count}`;
+        return ()=>{
+            document.title = `component remove`;
+        }
+    });
+    return <button click={()=>setCount(count+1)}>increment</button>;   
+}
+```
+
+
+
 ### Propiedades especiales
 
 ### scoped
@@ -237,16 +295,6 @@ export function Button(props){
     </button>
 }
 ```
-
-### state
-
-La propiedad `state`, permite definir el estado inicial de un componente de forma externa al mismo componente.
-
-```jsx
-<Button state={10}/>
-```
-
-Al usar dentro del componente `<Button/>`, la función `state.get()`, el retorno será lo asignado como propiedad `state={10}`.
 
 ### context
 
