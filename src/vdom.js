@@ -21,16 +21,6 @@ export class VDom {
     clone(tag = this.tag, props = this.props, children = this.props.children) {
         return new VDom(tag, props, children);
     }
-    /**
-     * Dispatch an existing function in `this.props`
-     * @param {String} prop - Property to emit the virtual node only if it exists as a function
-     * @param  {...any} args - Arguments to be issued to the function
-     */
-    emit(prop, ...args) {
-        if (this.prevent) return;
-        if (prop === "remove") this.prevent = true;
-        if (typeof this.props[prop] === "function") this.props[prop](...args);
-    }
 }
 /**
  * Prepare the virtual node
