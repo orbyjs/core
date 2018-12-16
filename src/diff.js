@@ -2,6 +2,9 @@ import { VDom } from "./vdom";
 import { create, remove, append, replace, root } from "./dom";
 export { h } from "./vdom";
 
+let CURRENT_COMPONENT;
+let CURRENT_KEY_STATE;
+
 export let options = {
     delay: 1
 };
@@ -49,9 +52,6 @@ export function emit(vdom, prop, ...args) {
     if (prop === "remove") vdom.prevent = true;
     if (vdom.props[prop]) vdom.props[prop](...args);
 }
-
-let CURRENT_COMPONENT;
-let CURRENT_KEY_STATE;
 
 export function useState(initialState) {
     let key = CURRENT_KEY_STATE++,
