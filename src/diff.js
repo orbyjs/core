@@ -19,6 +19,7 @@ export let PREVIOUS = "__previous__";
 export let REMOVE = "__remove__";
 
 export let LISTENERS = "__listeners__";
+
 /**
  * Special properties of virtual dom,
  * these are ignored from the diffProps process,
@@ -42,6 +43,42 @@ export function render(next, parent, child, context, isSvg) {
 export function defer(handler) {
     setTimeout(handler, options.delay);
 }
+
+export function emit(vdom, prop, ...args) {
+    if (vdom.prevent) return;
+    if (prop === "remove") vdom.prevent = true;
+    if (vdom.props[prop]) vdom.props[prop](...args);
+}
+
+let CURRENT_COMPONENT;
+let CURRENT_KEY_STATE;
+
+export function useState(initialState) {
+    let key = CURRENT_KEY_STATE++,
+        use = CURRENT_COMPONENT;
+    if (!(key in use.states)) {
+        use.states.push(
+            typeof initialState === "function" ? initialState() : initialState
+        );
+    }
+    return [
+        use.states[key],
+        nextState => {
+            use.states[key] = nextState;
+            if (use.prevent) return;
+            defer(() => {
+                use.render();
+                use.prevent = false;
+            });
+            use.prevent = true;
+        },
+        () => use.states[key]
+    ];
+}
+
+export function useEffect(handler) {
+    CURRENT_COMPONENT.effects[0].push(handler);
+}
 /**
  *
  * @param {Function} component  - Function that controls the node
@@ -49,34 +86,45 @@ export function defer(handler) {
  * @param {Boolean} [isSvg] - Create components for a group of svg
  * @return {HTMLElement} - Returns the current component node
  */
-export function Component(tag, state, isSvg, deep, key, components) {
-    this.tag = tag;
-    this.state = state;
-    this.context = {};
-    this.prevent = false;
-    this.render = (parent, base) => {
-        let set = state => {
-                this.state = state;
-                if (!base[REMOVE] && !this.prevent) {
-                    this.prevent = true;
-                    defer(() => {
-                        this.render(parent, base);
-                        this.prevent = false;
-                    });
-                }
-            },
-            get = () => this.state;
-        return (base = diff(
-            parent,
-            base,
-            this.tag(this.props, { set, get, context: this.context }),
-            this.context,
-            isSvg,
-            deep + 1,
-            key + 1,
-            components
-        ));
-    };
+export class Component {
+    constructor(tag, isSvg, deep, currentKey, currentComponents) {
+        this.base;
+        this.parent;
+        this.tag = tag;
+        this.props = {};
+        this.states = [];
+        this.effects = [];
+        this.context = {};
+        this.prevent = false;
+        this.render = () => {
+            //if (this.prevent) return this.base;
+            if (this.base[REMOVE]) return;
+
+            CURRENT_KEY_STATE = 0;
+            CURRENT_COMPONENT = this;
+
+            this.effects = [[], []];
+
+            let nextStateRender = tag(this.props, this.context);
+
+            CURRENT_COMPONENT = false;
+
+            this.base = diff(
+                this.parent,
+                this.base,
+                nextStateRender,
+                this.context,
+                isSvg,
+                deep + 1,
+                currentKey + 1,
+                currentComponents
+            );
+
+            this.effects[1] = this.effects[0].map(handler => handler());
+
+            return this.base;
+        };
+    }
 }
 /**
  * It allows to print the status of virtual dom on the planned configuration
@@ -123,6 +171,7 @@ export function diff(
     isSvg = next.tag === "svg" || isSvg;
 
     if (components[currentKey] && components[currentKey].tag !== next.tag) {
+        removeComponent(components[currentKey]);
         delete components[currentKey];
     }
 
@@ -130,7 +179,6 @@ export function diff(
         if ((components[currentKey] || {}).tag !== next.tag) {
             components[currentKey] = new Component(
                 next.tag,
-                next.props.state,
                 isSvg,
                 deep,
                 currentKey,
@@ -138,7 +186,7 @@ export function diff(
             );
         }
         component = components[currentKey];
-        next = next.clone(prev.tag || (isSvg ? "g" : ""));
+        next = next.clone(prev.tag || "");
     }
 
     if (prev.tag !== next.tag) {
@@ -152,24 +200,31 @@ export function diff(
                 }
             }
             replace(parent, base, node);
-            if (!component && prev.tag) emitRemove(node);
+            if (!component && prev.tag) {
+                recollectNodeTree(node);
+            }
         } else {
             append(parent, base);
         }
         isCreate = true;
-        next.emit("create", base);
+        emit(next, "create", base);
     }
 
     if (component) {
+        component.base = base;
+        component.parent = parent;
         component.props = next.props;
         component.context = context;
-        if (deep && component.prevent) {
-            return base;
+
+        //if (deep && component.prevent) {
+        if (component.prevent) {
+            return component.base;
         }
-        return component.render(parent, base);
+
+        return component.render();
     } else if (next.tag) {
         withUpdate =
-            next.emit("update", base, prev.props, next.props) !== false;
+            emit(next, "update", base, prev.props, next.props) !== false;
         if (isCreate || withUpdate) {
             diffProps(
                 base,
@@ -192,6 +247,7 @@ export function diff(
                         isSvg
                     );
                 } else {
+                    recollectNodeTree(childNodes[childI]);
                     remove(nextParent, childNodes[childI]);
                     move++;
                 }
@@ -206,7 +262,7 @@ export function diff(
     base[PREVIOUS] = withUpdate ? next : prev;
     base[COMPONENTS] = components;
 
-    next.emit(isCreate ? "created" : "updated", base);
+    emit(next, isCreate ? "created" : "updated", base);
 
     return base;
 }
@@ -275,7 +331,6 @@ export function diffProps(node, prev, next, isSvg) {
                                 }
                             }
                         }
-                        // next[prop] = { ...prevStyle, ...nextStyle };
                     } else {
                         node.style.cssText = next[prop];
                     }
@@ -296,13 +351,31 @@ export function diffProps(node, prev, next, isSvg) {
  * Issues the deletion of node and its children
  * @param {HTMLElement} base
  */
-export function emitRemove(base) {
-    let { prev = new VDom() } = (base && base[MASTER]) || {},
-        children = base.childNodes;
-    base[REMOVE] = true;
-    prev.emit("remove", base);
-    for (let i = 0; i < children.length; i++) {
-        emitRemove(children[i]);
+export function recollectNodeTree(node) {
+    let prev = node[PREVIOUS],
+        components = node[COMPONENTS],
+        children = node.childNodes;
+
+    if (!prev) return;
+
+    node[REMOVE] = true;
+
+    for (let key in components) {
+        removeComponent(components[key]);
     }
-    prev.emit("removed", base);
+
+    emit(prev, "remove", node);
+
+    for (let i = 0; i < children.length; i++) {
+        recollectNodeTree(children[i]);
+    }
+
+    emit(prev, "removed", node);
+}
+
+export function removeComponent(component) {
+    let effectsRemove = component.effects[1];
+    for (let i = 0; i < effectsRemove.length; i++) {
+        if (effectsRemove[i]) effectsRemove[i](component);
+    }
 }
