@@ -1,9 +1,11 @@
 export function create(tag, isSvg) {
-    return isSvg
-        ? document.createElementNS("http://www.w3.org/2000/svg", tag)
-        : tag
-        ? document.createElement(tag)
-        : document.createTextNode("");
+    if (tag) {
+        return isSvg
+            ? document.createElementNS("http://www.w3.org/2000/svg", tag)
+            : document.createElement(tag);
+    } else {
+        return document.createTextNode("");
+    }
 }
 
 export function root(parent) {
