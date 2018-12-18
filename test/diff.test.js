@@ -32,11 +32,11 @@ describe("diff", () => {
     test("context static", () => {
         let id = 100;
 
-        function Child(props, state, context) {
+        function Child(props, context) {
             expect(context.id).toBe(id);
         }
 
-        function Parent(props, state, context) {
+        function Parent(props, context) {
             return (
                 <div>
                     <Child />
@@ -55,11 +55,11 @@ describe("diff", () => {
         let id = 100,
             cd = 200;
 
-        function Child(props, state, context) {
+        function Child(props, context) {
             expect(context).toEqual({ id, cd });
         }
 
-        function Parent(props, state, context) {
+        function Parent(props, context) {
             return (
                 <div context={{ cd }}>
                     <Child />
@@ -73,5 +73,75 @@ describe("diff", () => {
             </div>,
             document.body
         );
+    });
+    test("create", () => {
+        render(
+            <div
+                create={target => {
+                    expect(target.outerHTML).toBe("<div></div>");
+                }}
+            >
+                my-div
+            </div>,
+            document.body
+        );
+    });
+    test("created", () => {
+        render(
+            <div
+                created={target => {
+                    expect(target.outerHTML).toBe("<div>my-div</div>");
+                }}
+            >
+                my-div
+            </div>,
+            document.body
+        );
+    });
+    test("update", () => {
+        let fistRender = render(<div />, document.body);
+
+        render(
+            <div
+                update={target => {
+                    expect(target.outerHTML).toBe("<div></div>");
+                }}
+            >
+                my-div
+            </div>,
+            document.body,
+            fistRender
+        );
+    });
+    test("updated", () => {
+        let fistRender = render(<div />, document.body);
+
+        render(
+            <div
+                updated={target => {
+                    expect(target.outerHTML).toBe("<div>my-div</div>");
+                }}
+            >
+                my-div
+            </div>,
+            document.body,
+            fistRender
+        );
+    });
+    test("remove && removed", () => {
+        let withUpdate,
+            fistRender = render(
+                <div
+                    remove={() => {
+                        withUpdate = true;
+                    }}
+                    removed={() => {
+                        expect(withUpdate).toBe(true);
+                    }}
+                />,
+                document.body
+            );
+
+        render(<a />, document.body, fistRender);
     });
 });
