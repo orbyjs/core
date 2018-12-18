@@ -10,6 +10,7 @@ export let options = {
 };
 
 export let COMPONENTS = "__components__";
+
 /**
  * Master is the mark to store the previous state
  * and if the node is controlled by one or more components
@@ -29,7 +30,7 @@ export let LISTENERS = "__listeners__";
  * since it is part of the component's life cycle
  */
 
-export let IGNORE = /^(context|state|children|(create|update|remove)(d){0,1}|xmlns)$/;
+export let IGNORE = /^(context|state|children|(create|update|remove)(d){0,1}|xmlns|key)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {VDom} next - the next state of the node
@@ -248,22 +249,30 @@ export function diff(
             let nextParent = next.props.scoped ? root(base) : base,
                 childNodes = nextParent.childNodes,
                 move = 0,
-                length = Math.max(children.length, childNodes.length);
-            for (let i = 0; i < length; i++) {
-                let childI = i - move;
-                if (i in children) {
-                    diff(
-                        nextParent,
-                        childNodes[childI],
-                        children[i],
-                        context,
-                        isSvg
-                    );
-                } else {
-                    recollectNodeTree(childNodes[childI]);
-                    remove(nextParent, childNodes[childI]);
-                    move++;
-                }
+                length,
+                ignore = {},
+                prevChildrenKeys = {};
+
+            for (let i = 0; i < childNodes.length; i++) {
+                let childNode = childNodes[i],
+                    prev = childNode[PREVIOUS],
+                    key = prev ? prev.key || i : i;
+
+                prevChildrenKeys[key] = childNode;
+            }
+
+            for (let i = 0; i < children.length; i++) {
+                let child = children[i],
+                    key = child instanceof VDom ? child.key : i,
+                    childNode = prevChildrenKeys[key];
+                diff(nextParent, childNode, child, context, isSvg);
+                delete prevChildrenKeys[key];
+            }
+
+            for (let key in prevChildrenKeys) {
+                let childNode = prevChildrenKeys[key];
+                recollectNodeTree(childNode);
+                remove(nextParent, childNode);
             }
         }
     } else {

@@ -11,6 +11,7 @@ export class VDom {
             ...props,
             children
         };
+        this.key = this.props.key;
     }
     /**
      * Clone the current node by keeping props and children by default
