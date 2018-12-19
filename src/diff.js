@@ -116,7 +116,7 @@ export class Component {
         this.effects = [];
         this.context = {};
         this.prevent = false;
-        this.render = () => {
+        this.render = rebuild => {
             //if (this.prevent) return this.base;
             if (this.base[REMOVE]) return;
 
@@ -135,6 +135,7 @@ export class Component {
                 nextStateRender,
                 this.context,
                 isSvg,
+                rebuild,
                 deep + 1,
                 currentComponents
             );
@@ -165,6 +166,7 @@ export function diff(
     next,
     context = {},
     isSvg,
+    rebuild,
     deep = 0,
     currentComponents = []
 ) {
@@ -235,7 +237,7 @@ export function diff(
             return component.base;
         }
 
-        return component.render();
+        return component.render(rebuild);
     } else if (next.tag) {
         withUpdate =
             emit(next, "update", base, prev.props, next.props) !== false;
@@ -256,16 +258,24 @@ export function diff(
             for (let i = 0; i < childNodes.length; i++) {
                 let childNode = childNodes[i],
                     prev = childNode[PREVIOUS],
-                    key = prev ? prev.key || i : i;
-
+                    key = prev && prev.key !== undefined ? prev.key : i;
                 prevChildrenKeys[key] = childNode;
             }
 
             for (let i = 0; i < children.length; i++) {
                 let child = children[i],
-                    key = child instanceof VDom ? child.key : i,
+                    useChildKey =
+                        child instanceof VDom && child.key !== undefined,
+                    key = useChildKey ? child.key : i,
                     childNode = prevChildrenKeys[key];
-                diff(nextParent, childNode, child, context, isSvg);
+                diff(
+                    nextParent,
+                    childNode,
+                    child,
+                    context,
+                    isSvg,
+                    useChildKey ? child.key !== key : rebuild
+                );
                 delete prevChildrenKeys[key];
             }
 
