@@ -144,4 +144,53 @@ describe("diff", () => {
 
         render(<a />, document.body, fistRender);
     });
+
+    test("keys", () => {
+        let state = [
+            { key: 1, value: "1" },
+            { key: 2, value: "2" },
+            { key: 3, value: "3" },
+            { key: 4, value: "4" },
+            { key: 5, value: "5" }
+        ];
+
+        let fistRender = render(
+            <div>
+                {state.map(({ key, value }) => (
+                    <button key={key} id={`id-${key}`}>
+                        {value}
+                    </button>
+                ))}
+            </div>,
+            document.body
+        );
+        // Get the current button list
+        let beforeButtons = Array.from(fistRender.querySelectorAll("button"));
+        // inverts the state, to generate a new one with the new order.
+        state.reverse();
+        // Get the current button list, after the new order.
+        let secondRender = render(
+            <div>
+                {state.map(({ key, value }) => (
+                    <button key={key} id={`id-${key}`}>
+                        {value}
+                    </button>
+                ))}
+            </div>,
+            document.body,
+            fistRender
+        );
+
+        let afterButtons = Array.from(
+            secondRender.querySelectorAll("button")
+        ).reverse();
+
+        expect(
+            // compares the current order with the previous one,
+            // verifying that the nodes are the same
+            afterButtons.every(
+                (currentNode, index) => currentNode === beforeButtons[index]
+            )
+        ).toBe(true);
+    });
 });
