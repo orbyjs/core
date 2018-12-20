@@ -1,5 +1,5 @@
 import { VDom } from "./vdom";
-import { create, remove, append, replace, root } from "./dom";
+import { create, remove, append, replace, root, toggle } from "./dom";
 export { h } from "./vdom";
 
 let CURRENT_COMPONENT;
@@ -205,7 +205,7 @@ export function diff(
         next = next.clone(prev.tag || "");
     }
 
-    if (prev.tag !== next.tag) {
+    if (prev.tag !== next.tag || rebuild) {
         base = create(next.tag, isSvg);
         if (node) {
             if (!component && next.tag) {
@@ -256,33 +256,42 @@ export function diff(
                 prevChildrenKeys = {};
 
             for (let i = 0; i < childNodes.length; i++) {
-                let childNode = childNodes[i],
-                    prev = childNode[PREVIOUS],
-                    key = prev && prev.key !== undefined ? prev.key : i;
-                prevChildrenKeys[key] = childNode;
+                let node = childNodes[i],
+                    prev = node[PREVIOUS],
+                    useKey = prev && prev.key !== undefined,
+                    key = useKey ? prev.key : i;
+                prevChildrenKeys[key] = {
+                    node,
+                    index: i,
+                    useKey
+                };
             }
 
             for (let i = 0; i < children.length; i++) {
                 let child = children[i],
-                    useChildKey =
-                        child instanceof VDom && child.key !== undefined,
-                    key = useChildKey ? child.key : i,
-                    childNode = prevChildrenKeys[key];
+                    useKey = child instanceof VDom && child.key !== undefined,
+                    key = useKey ? child.key : i,
+                    childNode = prevChildrenKeys[key] || {};
+
+                if (childNode.useKey && childNode.index !== i) {
+                    toggle(nextParent, childNode.node, childNodes[i]);
+                }
+
                 diff(
                     nextParent,
-                    childNode,
+                    childNode.node,
                     child,
                     context,
                     isSvg,
-                    useChildKey ? child.key !== key : rebuild
+                    useKey ? child.key !== key : rebuild
                 );
+
                 delete prevChildrenKeys[key];
             }
-
             for (let key in prevChildrenKeys) {
                 let childNode = prevChildrenKeys[key];
-                recollectNodeTree(childNode);
-                remove(nextParent, childNode);
+                recollectNodeTree(childNode.node);
+                remove(nextParent, childNode.node);
             }
         }
     } else {
