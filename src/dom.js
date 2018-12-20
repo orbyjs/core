@@ -22,3 +22,18 @@ export function append(parent, child) {
 export function replace(parent, newChild, oldChild) {
     parent.replaceChild(newChild, oldChild);
 }
+
+export function before(parent, newChild, oldChild) {
+    parent.insertBefore(newChild, oldChild);
+}
+
+export function toggle(parent, newChild, oldChild) {
+    let newWithNext = newChild.nextSibling,
+        oldWithNext = oldChild.nextSibling;
+
+    if (oldWithNext) {
+        before(parent, newChild, oldChild);
+    }
+
+    (newWithNext ? before : append)(parent, oldChild, newWithNext);
+}
