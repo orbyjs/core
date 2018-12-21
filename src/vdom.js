@@ -39,7 +39,8 @@ export function h(tag, props, ...children) {
  * @param {*} merge
  */
 export function concat(children, next = []) {
-    for (let i = 0; i < children.length; i++) {
+    let length = children.length;
+    for (let i = 0; i < length; i++) {
         let value = children[i];
         Array.isArray(value) ? concat(value, next) : next.push(value);
     }
