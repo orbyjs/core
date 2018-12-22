@@ -12,16 +12,17 @@ Orby es una pequeña y minimalista librería para crear interfaces modernas a ba
     2. [Estado del componente](#estado-del-componente)
     3. [Contexto en componente](#contexto-en-componente)
 4. [Ciclo de vida](#ciclo-de-vida)
-    1. [create](#create)
-    2. [created](#created)
-    3. [remove](#remove)
-    4. [removed](#removed)
-    5. [update](#update)
-    6. [updated](#updated)
+    1. [oncreate](#oncreate)
+    2. [oncreated](#oncreated)
+    3. [onremove](#onremove)
+    4. [onremoved](#onremoved)
+    5. [onupdate](#onupdate)
+    6. [onupdated](#onupdated)
 5. [Hooks](#hooks)
     1. [useState](#useState)
     2. [useEffect](#useEffect)
 6. [Propiedades especiales](#propiedades-especiales)
+    1. [key](#key)
     1. [scoped](#scoped)
     2. [state](#state)
     3. [context](#context)
@@ -59,7 +60,6 @@ Al momento de trabajar con Orby, por favor considere las siguientes diferencias 
 
 1. **asignación de eventos** sin prefijo `on`
 2. **nulo soporte a fragmentos**, los componentes de Orby se apegan mas a la definición de un árbol manteniendo siempre un nodo de raiz, esto es por como se expresa el [ciclo de vida](#ciclo-de-vida).
-3. **nulo soporte a key**, entiendo que en algunos casos las keys pueden incrementar la performance, pero en el contexto generar son escasamente usadas y mal interpretadas. 
 
 > Orby posee una api propia, la asociacion y comparativa con otras librerias en homologar api depende de una analisis utilitario en la experiencia de usuario
 
@@ -129,61 +129,61 @@ export function Button(){
 
 El proceso de DIFF invocara la propiedades `create` solo cuando el nodo `<button/>` se cree en el árbol de dom. Ud puede añadir las propiedad de ciclo de vida a los nodos que estime conveniente.
 
-### create
+### oncreate
 
-La propiedad `create`  se invoca  cuando el nodo se añade en el árbol de dom.
+La propiedad `oncreate`  se invoca  cuando el nodo se añade en el árbol de dom.
 
 ```jsx
 export function Button(){
-    return <button create={(target:HTMLElement)=>{
+    return <button oncreate={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### created
+### oncreated
 
-La propiedad `created`  se invoca  luego de que el nodo se añadió al árbol de dom y propago los cambios hacia sus hijos.
+La propiedad `oncreated`  se invoca  luego de que el nodo se añadió al árbol de dom y propago los cambios hacia sus hijos.
 
 ```jsx
 export function Button(){
-    return <button created={(target:HTMLElement)=>{
+    return <button oncreated={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### remove
+### onremove
 
-La propiedad `remove`  se invoca  al eliminar el nodo del arbol de dom.
+La propiedad `onremove`  se invoca  al eliminar el nodo del arbol de dom.
 
 ```jsx
 export function Button(){
-    return <button remove={(target:HTMLElement)=>{
+    return <button onremove={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### removed
+### onremoved
 
-La propiedad `removed`  se invoca  luego de eliminar el nodo del arbol de dom y propagar los cambios hacia sus hijos.
+La propiedad `onremoved`  se invoca  luego de eliminar el nodo del arbol de dom y propagar los cambios hacia sus hijos.
 
 ```jsx
 export function Button(){
-    return <button removed={(target:HTMLElement)=>{
+    return <button onremoved={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### update
+### onupdate
 
-La propiedad `update` se invoca  antes de propagar del nodo del arbol de dom. **retorne`false` para evitar tal propagación**
+La propiedad `onupdate` se invoca  antes de propagar del nodo del arbol de dom. **retorne`false` para evitar tal propagación**
 
 ```jsx
 export function Button(){
-    return <button update={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
+    return <button onupdate={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
@@ -191,11 +191,11 @@ export function Button(){
 
 ### updated
 
-La propiedad `updated` se invoca  luego de propagar del nodo del arbol de dom. 
+La propiedad `onupdated` se invoca  luego de propagar del nodo del arbol de dom. 
 
 ```jsx
 export function Button(){
-    return <button updated={(target:HTMLElement)=>{
+    return <button onupdated={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
@@ -250,7 +250,7 @@ export function Button(){
 
 Permite la ejecución de una función tantas veces se ejecute el componente, esta función se ejecuta luego del proceso de render asociado a parchar los cambios del nodo. 
 
-Es mas fácil entender a la ejecución de `useEffect` asociándola a los métodos de ciclo de vida del virtual-dom [created ](#created ) y [updated ](#updated )y [remove](#remove).
+Es mas fácil entender a la ejecución de `useEffect` asociándola a los métodos de ciclo de vida del virtual-dom [oncreated ](#created ) y [onupdated ](#onupdated )y [onremove](#onremove).
 
 ```jsx
 import {h,useEffect} from "@orby/core";
@@ -264,7 +264,7 @@ export function Button(){
 }
 ```
 
-si ud busca asimilar la ejecución del evento  [remove](#remove) del virtual-dom dentro de `useEffect`, la función asociada a `useEffect` deberá retornar una función.
+si ud busca asimilar la ejecución del evento  [onremove](#remove) del virtual-dom dentro de `useEffect`, la función asociada a `useEffect` deberá retornar una función.
 
 ```jsx
 export function Button(props,context){
@@ -282,6 +282,13 @@ export function Button(props,context){
 
 
 ### Propiedades especiales
+
+### key
+
+Permite definir identificador sobre el virtual-dom, para vincularlo a un estado anterior, indiferente a su orden. El uso de keys permite por ejemplo : 
+
+1.  Mantener un estado asociativo del virtual-dom y un nodo indiferente a su orden.
+2. Reducir la cantidad de manipulaciones asociadas al dom.
 
 ### scoped
 
