@@ -1,5 +1,5 @@
 import { VDom } from "./vdom";
-import { create, remove, append, replace, root, toggle } from "./dom";
+import { create, remove, append, replace, root, before } from "./dom";
 export { h } from "./vdom";
 
 let CURRENT_COMPONENT;
@@ -30,7 +30,7 @@ export let LISTENERS = "__listeners__";
  * since it is part of the component's life cycle
  */
 
-export let IGNORE = /^(context|state|children|(create|update|remove)(d){0,1}|xmlns|key)$/;
+export let IGNORE = /^(context|state|children|(on){0,1}(create|update|remove)(d){0,1}|xmlns|key)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {VDom} next - the next state of the node
@@ -41,7 +41,7 @@ export let IGNORE = /^(context|state|children|(create|update|remove)(d){0,1}|xml
  * @returns {HTMLElement} - The current node
  */
 export function render(next, parent, child, context, isSvg) {
-    return diff(root(parent), child, next, context, isSvg);
+    return diff(root(parent), child, false, next, context, isSvg);
 }
 /**
  * execute a callback based on setTimeout, this is to avoid an
@@ -116,7 +116,7 @@ export class Component {
         this.effects = [];
         this.context = {};
         this.prevent = false;
-        this.render = rebuild => {
+        this.render = () => {
             //if (this.prevent) return this.base;
             if (this.base[REMOVE]) return;
 
@@ -132,10 +132,10 @@ export class Component {
             this.base = diff(
                 this.parent,
                 this.base,
+                false,
                 nextStateRender,
                 this.context,
                 isSvg,
-                rebuild,
                 deep + 1,
                 currentComponents
             );
@@ -163,10 +163,10 @@ export class Component {
 export function diff(
     parent,
     node,
+    nodeSibling,
     next,
     context = {},
     isSvg,
-    rebuild,
     deep = 0,
     currentComponents = []
 ) {
@@ -190,9 +190,6 @@ export function diff(
 
     isSvg = next.tag === "svg" || isSvg;
 
-    /**
-     *
-     */
     if (components[deep] && components[deep].tag !== next.tag) {
         removeComponents(components.splice(deep));
     }
@@ -205,13 +202,11 @@ export function diff(
         next = next.clone(prev.tag || "");
     }
 
-    if (prev.tag !== next.tag || rebuild) {
+    if (prev.tag !== next.tag) {
         base = create(next.tag, isSvg);
         if (node) {
             if (!component && next.tag) {
-                let length = children.length;
                 while (node.firstChild) {
-                    if (!length--) break;
                     append(base, node.firstChild);
                 }
             }
@@ -220,7 +215,7 @@ export function diff(
             }
             replace(parent, base, node);
         } else {
-            append(parent, base);
+            (nodeSibling ? before : append)(parent, base, nodeSibling);
         }
         isCreate = true;
         if (!component) emit(next, "create", base);
@@ -237,7 +232,7 @@ export function diff(
             return component.base;
         }
 
-        return component.render(rebuild);
+        return component.render();
     } else if (next.tag) {
         withUpdate =
             emit(next, "update", base, prev.props, next.props) !== false;
@@ -250,46 +245,45 @@ export function diff(
             );
             let nextParent = next.props.scoped ? root(base) : base,
                 childNodes = nextParent.childNodes,
-                move = 0,
-                length,
-                ignore = {},
-                prevChildrenKeys = {};
-
-            for (let i = 0; i < childNodes.length; i++) {
-                let node = childNodes[i],
+                childrenLength = children.length,
+                childNodesLenght = childNodes.length,
+                childrenByKey = {},
+                index = 0;
+            for (let index = 0; index < childNodesLenght; index++) {
+                let node = childNodes[index],
                     prev = node[PREVIOUS],
                     useKey = prev && prev.key !== undefined,
-                    key = useKey ? prev.key : i;
-                prevChildrenKeys[key] = {
+                    key = useKey ? prev.key : index;
+
+                childrenByKey[key] = {
                     node,
-                    index: i,
+                    index,
                     useKey
                 };
             }
-
-            for (let i = 0; i < children.length; i++) {
+            for (let i = 0; i < childrenLength; i++) {
                 let child = children[i],
                     useKey = child instanceof VDom && child.key !== undefined,
                     key = useKey ? child.key : i,
-                    childNode = prevChildrenKeys[key] || {};
+                    childNode = childrenByKey[key] || {};
 
-                if (childNode.useKey && childNode.index !== i) {
-                    toggle(nextParent, childNode.node, childNodes[i]);
+                if (childNode.useKey && childNode.node !== childNodes[i]) {
+                    before(nextParent, childNode.node, childNodes[i]);
                 }
 
                 diff(
                     nextParent,
                     childNode.node,
+                    childNodes[i],
                     child,
                     context,
-                    isSvg,
-                    useKey ? child.key !== key : rebuild
+                    isSvg
                 );
 
-                delete prevChildrenKeys[key];
+                delete childrenByKey[key];
             }
-            for (let key in prevChildrenKeys) {
-                let childNode = prevChildrenKeys[key];
+            for (let key in childrenByKey) {
+                let childNode = childrenByKey[key];
                 recollectNodeTree(childNode.node);
                 remove(nextParent, childNode.node);
             }
@@ -318,25 +312,37 @@ export function diffProps(node, prev, next, isSvg) {
     let prevKeys = Object.keys(prev),
         nextKeys = Object.keys(next),
         keys = prevKeys.concat(nextKeys),
-        define = {};
+        length = keys.length,
+        ignore = {};
 
-    for (let i = 0; i < keys.length; i++) {
-        let prop = keys[i];
+    for (let i = 0; i < length; i++) {
+        let prop = keys[i],
+            prevValue = prev[prop],
+            nextValue = next[prop];
 
-        if (define[prop] || prev[prop] === next[prop] || IGNORE.test(prop))
+        if (ignore[prop] || prevValue === nextValue || IGNORE.test(prop))
             continue;
 
-        define[prop] = true;
+        ignore[prop] = true;
+
+        if (prop === "class" && !svg) {
+            prop = "className";
+            nextValue = nextValue || "";
+            prevValue = prevValue || "";
+        }
 
         if ("scoped" === prop && "attachShadow" in node) {
-            node.attachShadow({ mode: next[prop] ? "open" : "closed" });
+            node.attachShadow({ mode: nextValue ? "open" : "closed" });
             continue;
         }
 
-        let isFnPrev = typeof prev[prop] === "function",
-            isFnNext = typeof next[prop] === "function";
+        let isFnPrev = typeof prevValue === "function",
+            isFnNext = typeof nextValue === "function";
 
         if (isFnPrev || isFnNext) {
+            prop = prop.replace(/on(\w)/, (all, letter) =>
+                letter.toLowerCase()
+            );
             if (!isFnNext && isFnPrev) {
                 node.removeEventListener(prop, node[LISTENERS][prop][0]);
             }
@@ -352,14 +358,14 @@ export function diffProps(node, prev, next, isSvg) {
                     }
                     node.addEventListener(prop, node[LISTENERS][prop][0]);
                 }
-                node[LISTENERS][prop][1] = next[prop];
+                node[LISTENERS][prop][1] = nextValue;
             }
         } else if (prop in next) {
             if ((prop in node && !isSvg) || (isSvg && prop === "style")) {
                 if (prop === "style") {
-                    if (typeof next[prop] === "object") {
-                        let prevStyle = prev[prop] || {},
-                            nextStyle = next[prop];
+                    if (typeof nextValue === "object") {
+                        let prevStyle = prevValue || {},
+                            nextStyle = nextValue;
                         for (let prop in nextStyle) {
                             if (prevStyle[prop] !== nextStyle[prop]) {
                                 if (prop[0] === "-") {
@@ -373,15 +379,15 @@ export function diffProps(node, prev, next, isSvg) {
                             }
                         }
                     } else {
-                        node.style.cssText = next[prop];
+                        node.style.cssText = nextValue;
                     }
                 } else {
-                    node[prop] = next[prop];
+                    node[prop] = nextValue;
                 }
             } else {
                 isSvg
-                    ? node.setAttributeNS(null, prop, next[prop])
-                    : node.setAttribute(prop, next[prop]);
+                    ? node.setAttributeNS(null, prop, nextValue)
+                    : node.setAttribute(prop, nextValue);
             }
         } else {
             node.removeAttribute(prop);
@@ -395,7 +401,8 @@ export function diffProps(node, prev, next, isSvg) {
 export function recollectNodeTree(node) {
     let prev = node[PREVIOUS],
         components = node[COMPONENTS],
-        children = node.childNodes;
+        children = node.childNodes,
+        length;
 
     if (!prev) return;
 
@@ -405,7 +412,8 @@ export function recollectNodeTree(node) {
 
     removeComponents(components);
 
-    for (let i = 0; i < children.length; i++) {
+    length = children.length;
+    for (let i = 0; i < length; i++) {
         recollectNodeTree(children[i]);
     }
 
@@ -413,10 +421,12 @@ export function recollectNodeTree(node) {
 }
 
 export function removeComponents(components) {
-    for (let i = 0; i < components.length; i++) {
+    let length = components.length;
+    for (let i = 0; i < length; i++) {
         let component = components[i],
-            effectsRemove = component.effects[1];
-        for (let i = 0; i < effectsRemove.length; i++) {
+            effectsRemove = component.effects[1],
+            effectsLength = effectsRemove.length;
+        for (let i = 0; i < effectsLength; i++) {
             if (effectsRemove[i]) effectsRemove[i]();
         }
     }
