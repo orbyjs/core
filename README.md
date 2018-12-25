@@ -6,21 +6,20 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
 
 1. [Motivation](#motivation)
 2. [JSX](#jsx)
-    1. [JSX Assignment of events](#jsx-assignment-of-events)
 3. [Component](#component)
     1. [Properties of the component](#properties-of-the-component)
     2. [Control of component status](#control-of-component-status)
     3. [Control of the context of the component](#control-of-the-context-of-the-component)
 4. [Lifecycle](#lifecycle)
-    1. [create](#create)
-    2. [created](#created)
-    3. [remove](#remove)
-    4. [removed](#removed)
-    5. [update](#update)
-    6. [updated](#updated)
+    1. [oncreate](#oncreate)
+    2. [oncreated](#oncreated)
+    3. [onremove](#onremove)
+    4. [onremoved](#onremoved)
+    5. [onupdate](#onupdate)
+    6. [onupdated](#onupdated)
 5. [Special properties](#special-properties)
-    1. [scoped](#scoped)
-    2. [state](#state)
+    1. [key](#key)
+    2. [scoped](#scoped)
     3. [context](#context)
 6. [Examples](#examples)
 
@@ -54,31 +53,12 @@ The `<Button/>` component will be isolated in the Dom tree, this will define a c
 
 When working with Orby, please consider the following differences with other libraries, such as React, in:
 
-1. **Event allocation** sin prefijo `on`.
-2. **Null support fragments**, Orby's components are more attached to the definition of a tree always maintaining a root node, this is how it is expressed in the [Lifecycle](#lifecycle).
-3. **Null support a key**, I understand that in some cases the keys can increase the performance, but in the generating context they are scarcely used and misinterpreted.
+**Without fragment support**, Orby's components are more attached to the definition of a tree always maintaining a root node, this is how it is expressed in the [Lifecycle](#lifecycle).
 
-> Orby has its own api, the association and comparison with other libraries in homologar api depends on a utilitarian analysis in the user experience.
-
-### JSX Assignment of events
-
-To assign events for example to a button, it does not require prefixes `on` the name of the event, the DIFF process when detecting a function as property of the node, will define the property as an event.
-
-The following example shows how Orby adds an event to a `<button/>`
-
-```jsx
-<button click={handler}/>
-```
-
-This is very advantageous when working with Custom Events, since Orby does not manipulate the names.
-
-```jsx
-<web-component myCustomEvent={handler}/>
-```
 
 ## Component
 
-I hope that working with Orby is simple, I have tried to make the api efficient before the DIFF process.
+The functional Orbison components and you can manipulate the state of the nodes either through the [Lifecycle](#lifecycle) associated with the virtual-dom or through the use of [hooks](#hooks).
 
 ### Properties of the component
 
@@ -86,43 +66,18 @@ Like any functional component, the first argument of the component will always b
 
 ```jsx
 export function	Button(props){
-    return <button click={props.click}>{props.children}</button>
+    return <button onclick={props.click}>{props.children}</button>
 }
 ```
 
 The design pattern of purely functional components does not change if you were only limited to the use of Props.
-
-### Control of component status
-
-What Orby proposes, is the use of functional components, to facilitate the manipulation of the state there is a second argument, this second argument has 2 methods:
-
-1. **set**, updates the state of the component and renders the new state.
-2. **get**, obtains the current state of the component
-
-The following example shows how to generate a content toggle, by manipulating the state.
-
-```jsx
-export function	Button(props,state){
-    return <button click={()=>{
-        state.set( !state.get() )
-    }}>{state.get() ? props.children : undefined}</button>
-}
-```
-
-the state may be the one you determine, Orby does not oblige it to always be the object.
-
-Another important point of state management, is the definition of the initial state in the component, the initial state can be defined as a property of the same component by using the property `state={<initialState>}`, see the following example :
-
-```jsx
-<Button state={true}/>
-```
 
 ### Control of the context of the component
 
 The context allows you to share a defined object at a higher level, it will be very useful if you look for interaction between 2 components.
 
 ```jsx
-export function	Button(props,state,context){
+export function	Button(props,context){
     return <button>{context.message}</button>
 }
 ```
@@ -145,85 +100,92 @@ The life cycle does not exist in itself over the component, it manifests itself 
 
 ```jsx
 export function Button(){
-    return <button create={handlerWithCreate}>Hi! Orby</button>
+    return <button oncreate={handlerWithCreate}>Hi! Orby</button>
 }
 ```
 
-The DIFF process will invoke the `create` properties only when the `<button/>`node is created in the dom tree. You can add the life cycle properties to the nodes you deem convenient.
+The DIFF process will invoke the `oncreate` properties only when the `<button/>`node is created in the dom tree. You can add the life cycle properties to the nodes you deem convenient.
 
-### create
+### oncreate
 
-The `create` property is invoked when the node is added in the dom tree.
+The `oncreate` property is invoked when the node is added in the dom tree.
 
 ```jsx
 export function Button(){
-    return <button create={(target:HTMLElement)=>{
+    return <button oncreate={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### created
+### oncreated
 
-The `created` property is invoked after the node was added to the dom tree and propagated the changes to its children.
+The `oncreated` property is invoked after the node was added to the dom tree and propagated the changes to its children.
 
 ```jsx
 export function Button(){
-    return <button created={(target:HTMLElement)=>{
+    return <button oncreated={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### remove
+### onremove
 
-The `remove` property is invoked when removing the node from the dom tree.
+The `onremove` property is invoked when removing the node from the dom tree.
 
 ```jsx
 export function Button(){
-    return <button remove={(target:HTMLElement)=>{
+    return <button onremove={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### removed
+### onremoved
 
-The `removed` property is invoked after removing the node from the dom tree and propagating the changes to its children.
+The `onremoved` property is invoked after removing the node from the dom tree and propagating the changes to its children.
 
 ```jsx
 export function Button(){
-    return <button removed={(target:HTMLElement)=>{
+    return <button onremoved={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### update
+### onupdate
 
-The `update` property is invoked before propagating from the node of the dom tree. **return`false` to avoid such propagation**
+The `onupdate` property is invoked before propagating from the node of the dom tree. **return`false` to avoid such propagation**
 
 ```jsx
 export function Button(){
-    return <button update={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
+    return <button onupdate={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### updated
+### onupdated
 
-The `updated` property is invoked after propagating from the node of the dom tree.
+The `onupdated` property is invoked after propagating from the node of the dom tree.
 
 ```jsx
 export function Button(){
-    return <button updated={(target:HTMLElement)=>{
+    return <button onupdated={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
 ### Special properties
+
+### key
+
+It allows to define the identifier on the virtual-dom, to link it to a previous state, regardless of its order. The use of keys allows for example:
+
+1. Maintain an associative state of virtual-dom and a node indifferent to its order.
+2. Reduce the amount of manipulations associated with sun.
 
 ### scoped
 
@@ -237,16 +199,6 @@ export function Button(props){
     </button>
 }
 ```
-
-### state
-
-The `state` property allows defining the initial state of a component externally to the same component.
-
-```jsx
-<Button state={10}/>
-```
-
-When using the `<Button />` component, the `state.get ()` function, the return will be assigned as `state={10}` property.
 
 ### context
 
@@ -262,9 +214,5 @@ The example component `ChildComponent` can make use of the context defined in a 
 
 ## Examples
 
-| Ejemplo    | Detalle                                               | Code | Demo |
-| ---------- | ----------------------------------------------------- | ---- | ---- |
-| Counter    | Ejemplo básico de un contador con Orby                | [Link](https://codesandbox.io/s/6j3loqv0k3) | [Link](https://6j3loqv0k3.codesandbox.io/)    |
-| Todo       | Enseña como crear un Todolist usando Orby             |      |      |
-| Orby y Css | Permite crear componentes estilizados de forma simple |      |      |
+
 

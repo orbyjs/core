@@ -6,7 +6,6 @@ Orby es una pequeña y minimalista librería para crear interfaces modernas a ba
 
 1. [Motivacion](#motivación)
 2. [JSX](#jsx)
-    1. [JSX Asignacion de eventos](#jsx-asignación-de-eventos)
 3. [Componente](#componente)
     1. [Propiedades del componente](#propiedades-del-componente)
     2. [Estado del componente](#estado-del-componente)
@@ -23,8 +22,7 @@ Orby es una pequeña y minimalista librería para crear interfaces modernas a ba
     2. [useEffect](#useEffect)
 6. [Propiedades especiales](#propiedades-especiales)
     1. [key](#key)
-    1. [scoped](#scoped)
-    2. [state](#state)
+    2. [scoped](#scoped)
     3. [context](#context)
 7. [Ejemplos](#ejemplos)
 
@@ -58,30 +56,13 @@ El componente `<Button/>` quedara asilado en el árbol de Dom, esto definirá un
 
 Al momento de trabajar con Orby, por favor considere las siguientes diferencias con otras bibliotecas como React, en :
 
-1. **asignación de eventos** sin prefijo `on`
-2. **nulo soporte a fragmentos**, los componentes de Orby se apegan mas a la definición de un árbol manteniendo siempre un nodo de raiz, esto es por como se expresa el [ciclo de vida](#ciclo-de-vida).
+**Sin soporte a fragmentos**, los componentes de Orby se apegan mas a la definición de un árbol manteniendo siempre un nodo de raiz, esto es por como se expresa el [ciclo de vida](#ciclo-de-vida) del mismo arbol.
 
-> Orby posee una api propia, la asociacion y comparativa con otras librerias en homologar api depende de una analisis utilitario en la experiencia de usuario
 
-### JSX asignación de eventos
-
-Para asignar eventos por ejemplo a un botón, no requiere prefijos sobre el nombre del evento, el proceso de DIFF al detectar una función como propiedad del nodo, la definirá la propiedad como evento.
-
-El siguiente ejemplo enseña como Orby añade un evento a un `<button/>`
-
-```jsx
-<button click={handler}/>
-```
-
-Esto es muy ventajoso al momento de trabajar con CustomEvents, ya que Orby no manipula los nombres.
-
-```jsx
-<web-component myCustomEvent={handler}/>
-```
 
 ## Componente
 
-Espero que trabajar con Orby le resulte simple, me he esforzado en que la api sea eficiente ante el proceso de DIFF.
+Los componentes en Orby son funcionales y ud puede manipular el estado de los nodos sea mediante el [ciclo de vida](#ciclo-de-vida) asociado al virtual-dom o mediante el uso de [hooks](#hooks)
 
 ### Propiedades del componente
 
@@ -89,7 +70,7 @@ Al igual que cualquier componente funcional, el primer argumento del componente 
 
 ```jsx
 export function	Button(props){
-    return <button click={props.click}>{props.children}</button>
+    return <button onclick={props.click}>{props.children}</button>
 }
 ```
 
@@ -127,7 +108,7 @@ export function Button(){
 }
 ```
 
-El proceso de DIFF invocara la propiedades `create` solo cuando el nodo `<button/>` se cree en el árbol de dom. Ud puede añadir las propiedad de ciclo de vida a los nodos que estime conveniente.
+El proceso de DIFF invocara la propiedades `oncreate` solo cuando el nodo `<button/>` se cree en el árbol de dom. Ud puede añadir las propiedad de ciclo de vida a los nodos que estime conveniente.
 
 ### oncreate
 
@@ -279,6 +260,20 @@ export function Button(props,context){
 }
 ```
 
+`useEffect` también recibe un segundo argumentó, este le entrega la capacidad de limitar la ejecución del efecto solo ante los cambios asociados al segundo argumento. el siguiente ejemplo enseña como limitar la ejecución del efecto solo a una primera instancia. 
+
+```jsx
+export function Button(props,context){
+ 	useEffect(()=>{
+       console.log("component created")
+        return ()=>{
+            console.log("component remove")
+        }
+    },[true]);
+    return <button click={()=>setCount(count+1)}>increment</button>;   
+}
+```
+
 
 
 ### Propiedades especiales
@@ -316,10 +311,4 @@ la propiedad `context`, permite añadir nuevas propiedades al contexto.
 El componente  de ejemplo `ChildComponent`, puede hacer uso del contexto definido de forma superior. Note que no es necesario ingresar al componente para crear contextos. 
 
 ## Ejemplos
-
-| Ejemplo    | Detalle                                               | Repo | Demo |
-| ---------- | ----------------------------------------------------- | ---- | ---- |
-| Counter    | Ejemplo básico de un contador con Orby                |      |      |
-| Todo       | Enseña como crear un Todolist usando Orby             |      |      |
-| Orby y Css | Permite crear componentes estilizados de forma simple |      |      |
 
