@@ -30,7 +30,7 @@ export let LISTENERS = "__listeners__";
  * since it is part of the component's life cycle
  */
 
-export let IGNORE = /^(context|state|children|(on){0,1}(create|update|remove)(d){0,1}|xmlns|key)$/;
+export let IGNORE = /^(context|children|(on){1}(create|update|remove)(d){0,1}|xmlns|key)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {VDom} next - the next state of the node
@@ -60,9 +60,9 @@ export function defer(handler) {
  */
 export function emit(vdom, prop, ...args) {
     if (vdom.removed) return;
-    if (vdom.remove && prop !== "removed") return;
-    if (prop === "remove") vdom.remove = true;
-    if (prop === "removed") vdom.removed = true;
+    if (vdom.remove && prop !== "onremoved") return;
+    if (prop === "onremove") vdom.remove = true;
+    if (prop === "onremoved") vdom.removed = true;
     if (vdom.props[prop]) vdom.props[prop](...args);
 }
 /**
@@ -93,10 +93,32 @@ export function useState(initialState) {
 }
 /**
  * allows to add an observer effect before the changes of the component
+ * note the use of `recollectComponent`, this function allows to clean the
+ * effects associated with the elimination of the component.
  * @param {Function} handler
+ * @param {array} args - allows to issue the handler only when one of the properties is different from the previous one
  */
-export function useEffect(handler) {
-    CURRENT_COMPONENT.effects[0].push(handler);
+export function useEffect(handler, args = []) {
+    let setup,
+        use = CURRENT_COMPONENT;
+    args = [].concat(args);
+    let [state] = useState(() => {
+        setup = true;
+        return { args };
+    });
+
+    if (!setup) {
+        if (
+            state.args.length &&
+            !state.args.some((arg, index) => args[index] !== arg)
+        ) {
+            handler = undefined;
+        } else {
+            recollectComponent([use]);
+        }
+        state.args = args;
+    }
+    use.effects.updated.push(handler);
 }
 /**
  *
@@ -113,7 +135,7 @@ export class Component {
         this.tag = tag;
         this.props = {};
         this.states = [];
-        this.effects = [];
+        this.effects = { remove: [], updated: [] };
         this.context = {};
         this.prevent = false;
         this.render = () => {
@@ -123,7 +145,7 @@ export class Component {
             CURRENT_KEY_STATE = 0;
             CURRENT_COMPONENT = this;
 
-            this.effects = [[], []];
+            this.effects.updated = [];
 
             let nextStateRender = tag(this.props, this.context);
 
@@ -140,7 +162,9 @@ export class Component {
                 currentComponents
             );
 
-            this.effects[1] = this.effects[0].map(handler => handler());
+            this.effects.remove = this.effects.updated.map((handler, index) =>
+                handler ? handler() : this.effects.remove[index]
+            );
 
             return this.base;
         };
@@ -180,18 +204,22 @@ export function diff(
     if (prev === next) return base;
 
     if (!(next instanceof VDom)) {
-        next = new VDom("", {}, next);
+        let nextType = typeof next;
+        next = new VDom(
+            "",
+            {},
+            nextType === "string" || nextType === "number" ? next : ""
+        );
     }
 
-    let children = next.props.children,
-        addContext = next.props.context;
+    let addContext = next.props.context;
 
     context = addContext ? { ...context, ...addContext } : context;
 
     isSvg = next.tag === "svg" || isSvg;
 
     if (components[deep] && components[deep].tag !== next.tag) {
-        removeComponents(components.splice(deep));
+        recollectComponent(components.splice(deep));
     }
 
     if (typeof next.tag === "function") {
@@ -218,7 +246,7 @@ export function diff(
             (nodeSibling ? before : append)(parent, base, nodeSibling);
         }
         isCreate = true;
-        if (!component) emit(next, "create", base);
+        if (!component) emit(next, "oncreate", base);
     }
 
     if (component) {
@@ -235,7 +263,7 @@ export function diff(
         return component.render();
     } else if (next.tag) {
         withUpdate =
-            emit(next, "update", base, prev.props, next.props) !== false;
+            emit(next, "onupdate", base, prev.props, next.props) !== false;
         if (isCreate || withUpdate) {
             diffProps(
                 base,
@@ -243,7 +271,8 @@ export function diff(
                 next.props,
                 isSvg
             );
-            let nextParent = next.props.scoped ? root(base) : base,
+            let children = next.props.children,
+                nextParent = next.props.scoped ? root(base) : base,
                 childNodes = nextParent.childNodes,
                 childrenLength = children.length,
                 childNodesLenght = childNodes.length,
@@ -297,7 +326,7 @@ export function diff(
     base[PREVIOUS] = withUpdate ? next : prev;
     base[COMPONENTS] = components;
 
-    emit(next, isCreate ? "created" : "updated", base);
+    emit(next, isCreate ? "oncreated" : "onupdated", base);
 
     return base;
 }
@@ -398,7 +427,7 @@ export function diffProps(node, prev, next, isSvg) {
  * Issues the deletion of node and its children
  * @param {HTMLElement} node
  */
-export function recollectNodeTree(node) {
+function recollectNodeTree(node) {
     let prev = node[PREVIOUS],
         components = node[COMPONENTS],
         children = node.childNodes,
@@ -408,26 +437,27 @@ export function recollectNodeTree(node) {
 
     node[REMOVE] = true;
 
-    emit(prev, "remove", node);
+    emit(prev, "onremove", node);
 
-    removeComponents(components);
+    recollectComponent(components);
 
     length = children.length;
     for (let i = 0; i < length; i++) {
         recollectNodeTree(children[i]);
     }
 
-    emit(prev, "removed", node);
+    emit(prev, "onremoved", node);
 }
 
-export function removeComponents(components) {
+function recollectComponent(components) {
     let length = components.length;
     for (let i = 0; i < length; i++) {
         let component = components[i],
-            effectsRemove = component.effects[1],
+            effectsRemove = component.effects.remove,
             effectsLength = effectsRemove.length;
         for (let i = 0; i < effectsLength; i++) {
             if (effectsRemove[i]) effectsRemove[i]();
         }
+        component.effects.remove = [];
     }
 }
