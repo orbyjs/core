@@ -354,7 +354,7 @@ export function diffProps(node, prev, next, isSvg) {
 
         ignore[prop] = true;
 
-        if (prop === "class" && !svg) {
+        if (prop === "class" && !isSvg) {
             prop = "className";
             nextValue = nextValue || "";
             prevValue = prevValue || "";
