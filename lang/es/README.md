@@ -2,7 +2,7 @@
 
 Orby es una pequeña y minimalista librería para crear interfaces modernas a base de JSX, Virtual-Dom y Funciones.
 
-<img src="../../assets/counter.png" width="100%"/> 
+[<img src="../../assets/counter.png" width="100%"/>](https://codesandbox.io/s/20k8jm0x0r)
 
 ## Índice
 
@@ -172,7 +172,7 @@ export function Button(){
 }
 ```
 
-### updated
+### onupdated
 
 La propiedad `onupdated` se invoca  luego de propagar del nodo del arbol de dom. 
 
@@ -233,7 +233,7 @@ export function Button(){
 
 Permite la ejecución de una función tantas veces se ejecute el componente, esta función se ejecuta luego del proceso de render asociado a parchar los cambios del nodo. 
 
-Es mas fácil entender a la ejecución de `useEffect` asociándola a los métodos de ciclo de vida del virtual-dom [oncreated ](#created ) y [onupdated ](#onupdated )y [onremove](#onremove).
+Es mas fácil entender a la ejecución de `useEffect` asociándola a los métodos de ciclo de vida del virtual-dom [oncreated](#created) y [onupdated](#onupdated) y [onremove](#onremove).
 
 ```jsx
 import {h,useEffect} from "@orby/core";
@@ -314,3 +314,6 @@ El componente  de ejemplo `ChildComponent`, puede hacer uso del contexto definid
 
 ## Ejemplos
 
+|Titulo | link |
+|-------|------|
+|Counter | [🔗 link](https://codesandbox.io/s/20k8jm0x0r) |

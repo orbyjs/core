@@ -2,7 +2,7 @@
 
 Orby is a small and minimalist library to create modern interfaces based on JSX, Virtual-Dom and Functions.
 
-<img src="assets/counter.png" width="100%"/> 
+[<img src="assets/counter.png" width="100%"/>](https://codesandbox.io/s/20k8jm0x0r)
 
 ## Índice
 
@@ -180,6 +180,97 @@ export function Button(){
 }
 ```
 
+
+## Hooks
+
+Hooks are a powerful way to extend the behavior of a functional component created with **Orby**, this is a small implementation based on the [React Hooks](https://reactjs.org/docs/hooks-intro.html), consider also knowing well the [rules associated with the use of Hooks](https://reactjs.org/docs/hooks-rules.html)
+
+### ¿Why hooks?
+
+Independent logic of the functional component, you can create custom effects that are linked to the component only with the invocation, is such a link that these effects manage to control the state of the component without the need to know it.
+
+### useState
+
+It allows using a state and associating it with the component, by default the components in Orby do not have status since they are functions, if you require a component that can manipulate changes based on a state you can use `useState` within the component as many times as you deem appropriate. `useState` append the status control only when it is invoked within the component
+
+> Unlike `useState` of React, this returns in the array a 3 argument, this one has the purpose of obtaining the state in asynchronous behaviors, its use is optional.
+
+```jsx
+import {h,useState} from "@orby/core";
+export function Button(){
+    let [state,useState,getState] = useState();
+}
+```
+
+Note that `useState` returns an array, which you can use with [Destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) to associate A variable, `useState` also supports a first argument that defines the initial state.
+
+```jsx
+import {h,useState} from "@orby/core";
+
+export function Button(){
+    let [count,setCount] = useState(0);
+}
+```
+
+if this first argument is a function, it is executed only when initializing the state of the component.
+
+```jsx
+import {h,useState} from "@orby/core";
+function createState(){
+    return {data:[]};
+}
+export function Button(){
+    let [state,useState,getState] = useState(createState);
+}
+```
+
+### useEffect	
+
+It allows the execution of a function so many times the component is executed, this function is executed after the rendering process associated with patching the changes of the node.
+
+It is easier to understand the execution of `useEffect` by associating it with the life cycle methods of virtual-dom [oncreated](#oncreated) and [onupdated](#onupdated) and [onremove](#onremove).
+
+```jsx
+import {h,useEffect} from "@orby/core";
+
+export function Button(){
+    const [count, setCount] = useState(0);
+    useEffect(()=>{
+       document.title = `clicked ${count}`;
+    });
+    return <button click={()=>setCount(count+1)}>increment</button>;
+}
+```
+
+If you try to assimilate the execution of the event [onremove](#onremove) of the virtual-dom within `useEffect`, the function associated with `useEffect` must return a function.
+
+```jsx
+export function Button(props,context){
+ 	const [count, setCount] = useState(0);
+    useEffect(()=>{
+       document.title = `clicked ${count}`;
+        return ()=>{
+            document.title = `component remove`;
+        }
+    });
+    return <button click={()=>setCount(count+1)}>increment</button>;   
+}
+```
+
+`useEffect` also receives a second argument, this gives the ability to limit the execution of the effect only to the changes associated with the second argument. The following example shows how to limit the execution of the effect only to a first instance.
+
+```jsx
+export function Button(props,context){
+ 	useEffect(()=>{
+       console.log("component created")
+        return ()=>{
+            console.log("component remove")
+        }
+    },[true]);
+    return <button click={()=>setCount(count+1)}>increment</button>;   
+}
+```
+
 ### Special properties
 
 ### key
@@ -216,5 +307,8 @@ The example component `ChildComponent` can make use of the context defined in a 
 
 ## Examples
 
+|Title | link |
+|------|------|
+|Counter | [🔗 link](https://codesandbox.io/s/20k8jm0x0r) |
 
 
