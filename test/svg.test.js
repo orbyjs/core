@@ -24,7 +24,7 @@ describe("svg", () => {
             document.body
         );
     });
-    test("svg basic", () => {
+    test("svg path", () => {
         render(
             <svg
                 height="496pt"
@@ -49,6 +49,26 @@ describe("svg", () => {
                 <path
                     d="m336 296c-17.644531 0-32-14.351562-32-32s14.355469-32 32-32c17.648438 0 32 14.351562 32 32s-14.351562 32-32 32zm0 0"
                     fill="#f0bc5e"
+                />
+            </svg>,
+            document.body
+        );
+    });
+    test("svg image", () => {
+        render(
+            <svg
+                width="200"
+                height="200"
+                oncreated={target => {
+                    expect(target.outerHTML).toBe(
+                        `<svg width="200" height="200"><image xlink:href="https://mdn.mozillademos.org/files/6457/mdn_logo_only_color.png" height="200" width="200"></image></svg>`
+                    );
+                }}
+            >
+                <image
+                    xlink="https://mdn.mozillademos.org/files/6457/mdn_logo_only_color.png"
+                    height="200"
+                    width="200"
                 />
             </svg>,
             document.body
