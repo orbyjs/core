@@ -19,11 +19,14 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     4. [onremoved](#onremoved)
     5. [onupdate](#onupdate)
     6. [onupdated](#onupdated)
-5. [Special properties](#special-properties)
+5. [Hooks](#hooks)
+    1. [useState](#useState)
+    2. [useEffect](#useEffect)
+6. [Special properties](#special-properties)
     1. [key](#key)
     2. [scoped](#scoped)
     3. [context](#context)
-6. [Examples](#examples)
+7. [Examples](#examples)
 
 ## Motivation
 
