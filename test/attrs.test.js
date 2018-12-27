@@ -17,6 +17,22 @@ describe("diff", () => {
         ).toBe(label);
     });
 
+    test("create tree of nodes", () => {
+        let label = "text";
+        render(
+            <div class="parent">
+                <div class="child">
+                    <button>{label}</button>
+                </div>
+            </div>,
+            document.body
+        );
+
+        expect(
+            document.body.querySelector(".parent .child button").textContent
+        ).toBe(label);
+    });
+
     test("create component", () => {
         let label = "text";
 

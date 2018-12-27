@@ -346,6 +346,7 @@ export function diffProps(node, prev, next, isSvg) {
 
     for (let i = 0; i < length; i++) {
         let prop = keys[i],
+            inNext = prop in next,
             prevValue = prev[prop],
             nextValue = next[prop];
 
@@ -364,10 +365,8 @@ export function diffProps(node, prev, next, isSvg) {
             node.attachShadow({ mode: nextValue ? "open" : "closed" });
             continue;
         }
-
         let isFnPrev = typeof prevValue === "function",
             isFnNext = typeof nextValue === "function";
-
         if (isFnPrev || isFnNext) {
             prop = prop.replace(/on(\w)/, (all, letter) =>
                 letter.toLowerCase()
@@ -389,7 +388,7 @@ export function diffProps(node, prev, next, isSvg) {
                 }
                 node[LISTENERS][prop][1] = nextValue;
             }
-        } else if (prop in next) {
+        } else if (inNext) {
             if (
                 (prop in node &&
                     prop !== "list" &&
