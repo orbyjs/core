@@ -390,7 +390,13 @@ export function diffProps(node, prev, next, isSvg) {
                 node[LISTENERS][prop][1] = nextValue;
             }
         } else if (prop in next) {
-            if ((prop in node && !isSvg) || (isSvg && prop === "style")) {
+            if (
+                (prop in node &&
+                    prop !== "list" &&
+                    prop !== "type" &&
+                    !isSvg) ||
+                (isSvg && prop === "style")
+            ) {
                 if (prop === "style") {
                     if (typeof nextValue === "object") {
                         let prevStyle = prevValue || {},
@@ -415,11 +421,19 @@ export function diffProps(node, prev, next, isSvg) {
                 }
             } else {
                 isSvg
-                    ? node.setAttributeNS(null, prop, nextValue)
+                    ? node.setAttributeNS(
+                          isSvg && prop === "xlink"
+                              ? "http://www.w3.org/1999/xlink"
+                              : null,
+                          prop === "xlink" ? "xlink:href" : prop,
+                          nextValue
+                      )
                     : node.setAttribute(prop, nextValue);
             }
         } else {
-            node.removeAttribute(prop);
+            node.removeAttribute(
+                isSvg && prop === "xlink" ? "xlink:href" : prop
+            );
         }
     }
 }
