@@ -1,12 +1,12 @@
-import { VDom } from "./vdom";
+import { Vtag } from "./vtag";
 import { create, remove, append, replace, root, before } from "./dom";
-export { h } from "./vdom";
+export { h } from "./vtag";
 
 let CURRENT_COMPONENT;
 let CURRENT_KEY_STATE;
 
 export let options = {
-    delay: 1
+    delay: 0
 };
 
 export let COMPONENTS = "__components__";
@@ -22,18 +22,18 @@ export let PREVIOUS = "__previous__";
  */
 export let REMOVE = "__remove__";
 
-export let LISTENERS = "__listeners__";
+export let HANDLERS = "__handlers__";
 
 /**
  * Special properties of virtual dom,
- * these are ignored from the diffProps process,
+ * these are ignored from the updateProperties process,
  * since it is part of the component's life cycle
  */
 
 export let IGNORE = /^(context|children|(on){1}(create|update|remove)(d){0,1}|xmlns|key)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
- * @param {VDom} next - the next state of the node
+ * @param {Vtag} next - the next state of the node
  * @param {HTMLElement} parent - the container of the node
  * @param {HTMLElement} [child]  - the ancestor of the node
  * @param {object} [context] - the context of the node
@@ -41,7 +41,7 @@ export let IGNORE = /^(context|children|(on){1}(create|update|remove)(d){0,1}|xm
  * @returns {HTMLElement} - The current node
  */
 export function render(next, parent, child, context, isSvg) {
-    return diff(root(parent), child, false, next, context, isSvg);
+    return updateElement(root(parent), child, false, next, context, isSvg);
 }
 /**
  * execute a callback based on setTimeout, this is to avoid an
@@ -54,16 +54,16 @@ export function defer(handler) {
 /**
  * It allows to execute a property of the virtual-dom,
  * this function has a use focused on the life cycle of the node
- * @param {VDom} vdom
+ * @param {Vtag} Vtag
  * @param {string} prop
  * @param  {...any} args
  */
-export function emit(vdom, prop, ...args) {
-    if (vdom.removed) return;
-    if (vdom.remove && prop !== "onremoved") return;
-    if (prop === "onremove") vdom.remove = true;
-    if (prop === "onremoved") vdom.removed = true;
-    if (vdom.props[prop]) vdom.props[prop](...args);
+export function emit(Vtag, prop, ...args) {
+    if (Vtag.removed) return;
+    if (Vtag.remove && prop !== "onremoved") return;
+    if (prop === "onremove") Vtag.remove = true;
+    if (prop === "onremoved") Vtag.removed = true;
+    if (Vtag.props[prop]) Vtag.props[prop](...args);
 }
 /**
  * Allows you to add an observer status of changes to the functional component
@@ -93,7 +93,7 @@ export function useState(initialState) {
 }
 /**
  * allows to add an observer effect before the changes of the component
- * note the use of `recollectComponent`, this function allows to clean the
+ * note the use of `recollectComponentsEffects`, this function allows to clean the
  * effects associated with the elimination of the component.
  * @param {Function} handler
  * @param {array} args - allows to issue the handler only when one of the properties is different from the previous one
@@ -114,7 +114,7 @@ export function useEffect(handler, args = []) {
         ) {
             handler = undefined;
         } else {
-            recollectComponent([use]);
+            recollectComponentsEffects([use]);
         }
         state.args = args;
     }
@@ -151,7 +151,7 @@ export class Component {
 
             CURRENT_COMPONENT = false;
 
-            this.base = diff(
+            this.base = updateElement(
                 this.parent,
                 this.base,
                 false,
@@ -174,17 +174,16 @@ export class Component {
  * It allows to print the status of virtual dom on the planned configuration
  * @param {HTMLElement} parent - the container of the node
  * @param {HTMLElement} [node]  - the ancestor of the node
- * @param {VDom} next - the next state of the node
+ * @param {HTMLElement} [nodeSibling]  - allows using the before method in replacement of append, if the node is created
+ * @param {Vtag} next - the next state of the node
  * @param {Object} [context] - the context of the node
  * @param {boolean} [isSvg] - check if the node belongs to a svg unit, to control it as such
  * @param {number} [deep] - this is a depth marker used to generate an index to store the state of the component
- * @param {number} [currentKey] - when generating a component of high order, it has a currentKey
- *                                other than 0, this allows to point to the state of the component correctly
  * @param {object} [currentComponents] - the functional components are stored in an object created by the first component
  * @returns {HTMLElement} - The current node
  */
 
-export function diff(
+export function updateElement(
     parent,
     node,
     nodeSibling,
@@ -194,7 +193,7 @@ export function diff(
     deep = 0,
     currentComponents = []
 ) {
-    let prev = (node && node[PREVIOUS]) || new VDom(),
+    let prev = (node && node[PREVIOUS]) || new Vtag(),
         components = (node && node[COMPONENTS]) || currentComponents,
         base = node,
         isCreate,
@@ -203,9 +202,9 @@ export function diff(
 
     if (prev === next) return base;
 
-    if (!(next instanceof VDom)) {
+    if (!(next instanceof Vtag)) {
         let nextType = typeof next;
-        next = new VDom(
+        next = new Vtag(
             "",
             {},
             nextType === "string" || nextType === "number" ? next : ""
@@ -219,7 +218,7 @@ export function diff(
     isSvg = next.tag === "svg" || isSvg;
 
     if (components[deep] && components[deep].tag !== next.tag) {
-        recollectComponent(components.splice(deep));
+        recollectComponentsEffects(components.splice(deep));
     }
 
     if (typeof next.tag === "function") {
@@ -265,56 +264,64 @@ export function diff(
         withUpdate =
             emit(next, "onupdate", base, prev.props, next.props) !== false;
         if (isCreate || withUpdate) {
-            diffProps(
+            updateProperties(
                 base,
                 prev.tag === next.tag ? prev.props : {},
                 next.props,
                 isSvg
             );
-            let children = next.props.children,
+            let childrenVtag = next.props.children,
                 nextParent = next.props.scoped ? root(base) : base,
-                childNodes = nextParent.childNodes,
-                childrenLength = children.length,
-                childNodesLenght = childNodes.length,
-                childrenByKey = {},
-                index = 0;
-            for (let index = 0; index < childNodesLenght; index++) {
-                let node = childNodes[index],
+                childrenReal = nextParent.childNodes,
+                childrenVtagLength = childrenVtag.length,
+                childrenRealLength = childrenReal.length,
+                childrenByKeys = {},
+                childrenToDiff = [];
+            for (let index = 0; index < childrenRealLength; index++) {
+                let node = childrenReal[index],
                     prev = node[PREVIOUS],
                     useKey = prev && prev.key !== undefined,
                     key = useKey ? prev.key : index;
 
-                childrenByKey[key] = {
+                childrenByKeys[key] = {
                     node,
                     index,
                     useKey
                 };
             }
-            for (let i = 0; i < childrenLength; i++) {
-                let child = children[i],
-                    useKey = child instanceof VDom && child.key !== undefined,
+            for (let i = 0; i < childrenVtagLength; i++) {
+                let child = childrenVtag[i],
+                    useKey = child instanceof Vtag && child.key !== undefined,
                     key = useKey ? child.key : i,
-                    childNode = childrenByKey[key] || {};
+                    childNode = childrenByKeys[key] || {};
 
-                if (childNode.useKey && childNode.node !== childNodes[i]) {
-                    before(nextParent, childNode.node, childNodes[i]);
+                childrenToDiff.push([childNode, child]);
+
+                delete childrenByKeys[key];
+            }
+            for (let key in childrenByKeys) {
+                let childNode = childrenByKeys[key];
+                recollectNodeTree(childNode.node);
+                remove(nextParent, childNode.node);
+            }
+            for (let i = 0; i < childrenVtagLength; i++) {
+                let [currentNode, nextState] = childrenToDiff[i];
+
+                if (
+                    currentNode.useKey &&
+                    currentNode.node !== childrenReal[i]
+                ) {
+                    before(nextParent, currentNode.node, childrenReal[i]);
                 }
 
-                diff(
+                updateElement(
                     nextParent,
-                    childNode.node,
-                    childNodes[i],
-                    child,
+                    currentNode.node,
+                    childrenReal[i],
+                    nextState,
                     context,
                     isSvg
                 );
-
-                delete childrenByKey[key];
-            }
-            for (let key in childrenByKey) {
-                let childNode = childrenByKey[key];
-                recollectNodeTree(childNode.node);
-                remove(nextParent, childNode.node);
             }
         }
     } else {
@@ -337,7 +344,7 @@ export function diff(
  * @param {Object} next - next status of attributes
  * @param {Boolean} [isSvg] - If it belongs to svg tree
  */
-export function diffProps(node, prev, next, isSvg) {
+export function updateProperties(node, prev, next, isSvg) {
     let prevKeys = Object.keys(prev),
         nextKeys = Object.keys(next),
         keys = prevKeys.concat(nextKeys),
@@ -372,21 +379,21 @@ export function diffProps(node, prev, next, isSvg) {
                 letter.toLowerCase()
             );
             if (!isFnNext && isFnPrev) {
-                node.removeEventListener(prop, node[LISTENERS][prop][0]);
+                node.removeEventListener(prop, node[HANDLERS][prop][0]);
             }
             if (isFnNext) {
                 if (!isFnPrev) {
-                    node[LISTENERS] = node[LISTENERS] || {};
-                    if (!node[LISTENERS][prop]) {
-                        node[LISTENERS][prop] = [
+                    node[HANDLERS] = node[HANDLERS] || {};
+                    if (!node[HANDLERS][prop]) {
+                        node[HANDLERS][prop] = [
                             event => {
-                                node[LISTENERS][prop][1](event);
+                                node[HANDLERS][prop][1](event);
                             }
                         ];
                     }
-                    node.addEventListener(prop, node[LISTENERS][prop][0]);
+                    node.addEventListener(prop, node[HANDLERS][prop][0]);
                 }
-                node[LISTENERS][prop][1] = nextValue;
+                node[HANDLERS][prop][1] = nextValue;
             }
         } else if (inNext) {
             if (
@@ -452,7 +459,7 @@ function recollectNodeTree(node) {
 
     emit(prev, "onremove", node);
 
-    recollectComponent(components);
+    recollectComponentsEffects(components);
 
     length = children.length;
     for (let i = 0; i < length; i++) {
@@ -462,7 +469,7 @@ function recollectNodeTree(node) {
     emit(prev, "onremoved", node);
 }
 
-function recollectComponent(components) {
+function recollectComponentsEffects(components) {
     let length = components.length;
     for (let i = 0; i < length; i++) {
         let component = components[i],
