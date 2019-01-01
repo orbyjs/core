@@ -6,24 +6,26 @@ export { h } from "./vtag";
 let CURRENT_COMPONENT;
 let CURRENT_KEY_STATE;
 
-export let options = {
+export let config = {
     delay: 0
 };
 
-export let COMPONENTS = "__components__";
+export let COMPONENTS = "__COMPONENTS__";
+
+export let STATIC_RENDER = "__STATIC_RENDER__";
 
 /**
  * Master is the mark to store the previous state
  * and if the node is controlled by one or more components
  */
-export let PREVIOUS = "__previous__";
+export let PREVIOUS = "__PREVIOUS__";
 /**
  * Each time a component is removed from the dom,
  * the property is marked as true
  */
-export let REMOVE = "__remove__";
+export let REMOVE = "__REMOVE__";
 
-export let HANDLERS = "__handlers__";
+export let HANDLERS = "__HANDLERS__";
 
 /**
  * Special properties of virtual dom,
@@ -31,7 +33,7 @@ export let HANDLERS = "__handlers__";
  * since it is part of the component's life cycle
  */
 
-export let IGNORE = /^(context|children|(on){1}(create|update|remove)(d){0,1}|xmlns|key|ref)$/;
+export let IGNORE = /^(context|children|(on){1}(Create|Update|Remove)(d){0,1}|xmlns|key|ref)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {Vtag} next - the next state of the node
@@ -50,7 +52,7 @@ export function render(next, parent, child, context, isSvg) {
  * @param {Function} handler
  */
 export function defer(handler) {
-    setTimeout(handler, options.delay);
+    setTimeout(handler, config.delay);
 }
 /**
  * It allows to execute a property of the virtual-dom,
@@ -61,11 +63,64 @@ export function defer(handler) {
  */
 export function emit(Vtag, prop, ...args) {
     if (Vtag.removed) return;
-    if (Vtag.remove && prop !== "onremoved") return;
-    if (prop === "onremove") Vtag.remove = true;
-    if (prop === "onremoved") Vtag.removed = true;
+    if (Vtag.remove && prop !== "onRemoved") return;
+    if (prop === "onRemove") Vtag.remove = true;
+    if (prop === "onRemoved") Vtag.removed = true;
     if (Vtag.props[prop]) Vtag.props[prop](...args);
 }
+
+export function getPrevious(node, create = true) {
+    if (node) {
+        if (node[PREVIOUS]) {
+            return node[PREVIOUS];
+        } else {
+            let tag = "",
+                props = {},
+                children = [];
+            if (node instanceof Text) {
+                children = [node.textContent];
+            } else {
+                let isScoped,
+                    attrs = node.attributes,
+                    childrenReal = node.childNodes,
+                    childrenRealLength = childrenReal.length,
+                    childrenCountRemove = 0,
+                    attrsLength = attrs.length,
+                    supportAttachShadow = "attachShadow" in node;
+
+                tag = node.tagName.toLowerCase();
+
+                for (let i = 0; i < attrsLength; i++) {
+                    let { name, value } = attrs[i];
+                    props[name] = value;
+                    if (name === "scoped") isScoped = true;
+                }
+                if (isScoped && supportAttachShadow) {
+                    if (!node.shadowRoot) node.attachShadow({ mode: "open" });
+                }
+
+                for (let i = 0; i < childrenRealLength; i++) {
+                    let childReal = childrenReal[i - childrenCountRemove];
+                    if (isScoped && supportAttachShadow) {
+                        node.shadowRoot.appendChild(childReal);
+                        childrenCountRemove++;
+                    }
+                    children.push(getPrevious(childReal));
+                }
+            }
+            node[STATIC_RENDER] = true;
+            node[COMPONENTS] = [];
+            return (node[PREVIOUS] = new Vtag(tag, props, children));
+        }
+    } else {
+        return create ? new Vtag() : false;
+    }
+}
+
+export function getComponents(node, components) {
+    return node && node[COMPONENTS];
+}
+
 /**
  * Allows you to add an observer status of changes to the functional component
  * @param {*} initialState - Initial state to register
@@ -131,6 +186,7 @@ export function useEffect(handler, args = []) {
  */
 export class Component {
     constructor(tag, isSvg, deep, currentComponents) {
+        this.isCreate = true;
         this.base;
         this.parent;
         this.tag = tag;
@@ -160,17 +216,21 @@ export class Component {
                 this.context,
                 isSvg,
                 deep + 1,
-                currentComponents
+                currentComponents,
+                this.isCreate
             );
 
             this.effects.remove = this.effects.updated.map((handler, index) =>
                 handler ? handler() : this.effects.remove[index]
             );
 
+            this.isCreate = false;
+
             return this.base;
         };
     }
 }
+
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {HTMLElement} parent - the container of the node
@@ -192,12 +252,12 @@ export function updateElement(
     context = {},
     isSvg,
     deep = 0,
-    currentComponents = []
+    currentComponents = [],
+    isCreate
 ) {
-    let prev = (node && node[PREVIOUS]) || new Vtag(),
+    let prev = getPrevious(node),
         components = (node && node[COMPONENTS]) || currentComponents,
         base = node,
-        isCreate,
         component,
         withUpdate = true;
 
@@ -227,15 +287,9 @@ export function updateElement(
         component = components[deep];
         next = next.clone(prev.tag || "");
     }
-
     if (prev.tag !== next.tag) {
         base = create(next.tag, isSvg);
         if (node) {
-            if (!component && next.tag) {
-                while (node.firstChild) {
-                    append(base, node.firstChild);
-                }
-            }
             if (!component && prev.tag) {
                 recollectNodeTree(node);
             }
@@ -247,7 +301,15 @@ export function updateElement(
     }
 
     if (next.ref) next.ref.current = base;
-    if (isCreate && !component) emit(next, "oncreate", base);
+
+    if (base[STATIC_RENDER]) {
+        isCreate = true;
+        base[STATIC_RENDER] = false;
+    }
+
+    if (isCreate && !component) {
+        emit(next, "onCreate", base);
+    }
 
     if (component) {
         component.base = base;
@@ -263,7 +325,7 @@ export function updateElement(
         return component.render();
     } else if (next.tag) {
         withUpdate =
-            emit(next, "onupdate", base, prev.props, next.props) !== false;
+            emit(next, "onUpdate", base, prev.props, next.props) !== false;
         if (isCreate || withUpdate) {
             updateProperties(
                 base,
@@ -283,7 +345,7 @@ export function updateElement(
 
             for (let index = 0; index < childrenRealLength; index++) {
                 let node = childrenReal[index - childrenCountRemove],
-                    prev = node[PREVIOUS],
+                    prev = getPrevious(node),
                     useKey = prev && prev.useKey,
                     key = useKey ? prev.key : index;
 
@@ -313,7 +375,10 @@ export function updateElement(
                     childReal,
                     childVtag,
                     context,
-                    isSvg
+                    isSvg,
+                    0,
+                    [],
+                    isCreate
                 );
             }
         }
@@ -325,8 +390,7 @@ export function updateElement(
 
     base[PREVIOUS] = withUpdate ? next : prev;
     base[COMPONENTS] = components;
-
-    emit(next, isCreate ? "oncreated" : "onupdated", base);
+    emit(next, isCreate ? "onCreated" : "onUpdated", base);
 
     return base;
 }
@@ -362,7 +426,8 @@ export function updateProperties(node, prev, next, isSvg) {
         }
 
         if ("scoped" === prop && "attachShadow" in node) {
-            node.attachShadow({ mode: nextValue ? "open" : "closed" });
+            if (!node.shadowRoot)
+                node.attachShadow({ mode: nextValue ? "open" : "closed" });
             continue;
         }
         let isFnPrev = typeof prevValue === "function",
@@ -441,8 +506,8 @@ export function updateProperties(node, prev, next, isSvg) {
  * @param {HTMLElement} node
  */
 function recollectNodeTree(node) {
-    let prev = node[PREVIOUS],
-        components = node[COMPONENTS],
+    let prev = getPrevious(node, false),
+        components = getComponents(node),
         children = node.childNodes,
         length;
 
@@ -450,7 +515,7 @@ function recollectNodeTree(node) {
 
     node[REMOVE] = true;
 
-    emit(prev, "onremove", node);
+    emit(prev, "onRemove", node);
 
     recollectComponentsEffects(components);
 
@@ -459,7 +524,7 @@ function recollectNodeTree(node) {
         recollectNodeTree(children[i]);
     }
 
-    emit(prev, "onremoved", node);
+    emit(prev, "onRemoved", node);
 }
 
 function recollectComponentsEffects(components) {

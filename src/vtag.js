@@ -7,11 +7,17 @@ export class Vtag {
      */
     constructor(tag, props = {}, children = []) {
         this.tag = tag;
+        this.keys = [];
+        this.children = [];
         this.props = {
             ...props,
-            children
+            children: this.children
         };
         this.key = this.props.key;
+        this.ref = this.props.ref;
+        this.useKey = this.props.key !== undefined;
+
+        this.loadChildren(children);
     }
     /**
      * Clone the current node by keeping props and children by default
@@ -22,6 +28,24 @@ export class Vtag {
     clone(tag = this.tag, props = this.props, children = this.props.children) {
         return new Vtag(tag, props, children);
     }
+    loadChildren(children) {
+        let length = children.length;
+        for (let i = 0; i < length; i++) {
+            let value = children[i];
+            if (Array.isArray(value)) {
+                this.loadChildren(value);
+            } else {
+                this.keys.push(
+                    value instanceof Vtag
+                        ? value.key !== undefined
+                            ? value.key
+                            : this.keys.length
+                        : this.keys.length
+                );
+                this.children.push(value);
+            }
+        }
+    }
 }
 /**
  * Prepare the virtual node
@@ -31,18 +55,5 @@ export class Vtag {
  * @return {Vtag}
  */
 export function h(tag, props, ...children) {
-    return new Vtag(tag || "", props, concat(children));
-}
-/**
- * Clean existing values in virtual-dom tree
- * @param {*} children
- * @param {*} merge
- */
-export function concat(children, next = []) {
-    let length = children.length;
-    for (let i = 0; i < length; i++) {
-        let value = children[i];
-        Array.isArray(value) ? concat(value, next) : next.push(value);
-    }
-    return next;
+    return new Vtag(tag || "", props, children);
 }

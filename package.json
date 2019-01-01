@@ -1,9 +1,9 @@
 {
   "name": "@orby/core",
   "description": "Orby is a small experiment of functional components based on virtual-dom.",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "main": "dist/orby.js",
-  "module": "dist/orby.m.js",
+  "module": "dist/orby.mjs",
   "umd:main": "dist/orby.umd.js",
   "source": "src/index.js",
   "author": "Matias Trujillo Olivares",
