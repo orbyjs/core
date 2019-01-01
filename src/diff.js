@@ -1,5 +1,6 @@
 import { Vtag } from "./vtag";
 import { create, remove, append, replace, root, before } from "./dom";
+import { reverse } from "dns";
 export { h } from "./vtag";
 
 let CURRENT_COMPONENT;
@@ -30,7 +31,7 @@ export let HANDLERS = "__handlers__";
  * since it is part of the component's life cycle
  */
 
-export let IGNORE = /^(context|children|(on){1}(create|update|remove)(d){0,1}|xmlns|key)$/;
+export let IGNORE = /^(context|children|(on){1}(create|update|remove)(d){0,1}|xmlns|key|ref)$/;
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {Vtag} next - the next state of the node
@@ -204,11 +205,9 @@ export function updateElement(
 
     if (!(next instanceof Vtag)) {
         let nextType = typeof next;
-        next = new Vtag(
-            "",
-            {},
+        next = new Vtag("", {}, [
             nextType === "string" || nextType === "number" ? next : ""
-        );
+        ]);
     }
 
     let addContext = next.props.context;
@@ -245,8 +244,10 @@ export function updateElement(
             (nodeSibling ? before : append)(parent, base, nodeSibling);
         }
         isCreate = true;
-        if (!component) emit(next, "oncreate", base);
     }
+
+    if (next.ref) next.ref.current = base;
+    if (isCreate && !component) emit(next, "oncreate", base);
 
     if (component) {
         component.base = base;
@@ -270,63 +271,55 @@ export function updateElement(
                 next.props,
                 isSvg
             );
-            let childrenVtag = next.props.children,
+            let childrenVtag = next.children,
+                childrenVtagKeys = next.keys,
                 nextParent = next.props.scoped ? root(base) : base,
                 childrenReal = nextParent.childNodes,
                 childrenVtagLength = childrenVtag.length,
                 childrenRealLength = childrenReal.length,
                 childrenByKeys = {},
-                childrenToDiff = [];
+                childrenToDiff = [],
+                childrenCountRemove = 0;
+
             for (let index = 0; index < childrenRealLength; index++) {
-                let node = childrenReal[index],
+                let node = childrenReal[index - childrenCountRemove],
                     prev = node[PREVIOUS],
-                    useKey = prev && prev.key !== undefined,
+                    useKey = prev && prev.useKey,
                     key = useKey ? prev.key : index;
 
-                childrenByKeys[key] = {
-                    node,
-                    index,
-                    useKey
-                };
+                if (childrenVtagKeys.indexOf(key) > -1) {
+                    childrenByKeys[key] = [node, useKey];
+                } else {
+                    recollectNodeTree(node);
+                    remove(nextParent, node);
+                    childrenCountRemove++;
+                }
             }
+
             for (let i = 0; i < childrenVtagLength; i++) {
-                let child = childrenVtag[i],
-                    useKey = child instanceof Vtag && child.key !== undefined,
-                    key = useKey ? child.key : i,
-                    childNode = childrenByKeys[key] || {};
+                let childVtag = childrenVtag[i],
+                    childReal = childrenReal[i],
+                    [childFromKey, useKey] =
+                        childrenByKeys[childVtag.useKey ? childVtag.key : i] ||
+                        [];
 
-                childrenToDiff.push([childNode, child]);
-
-                delete childrenByKeys[key];
-            }
-            for (let key in childrenByKeys) {
-                let childNode = childrenByKeys[key];
-                recollectNodeTree(childNode.node);
-                remove(nextParent, childNode.node);
-            }
-            for (let i = 0; i < childrenVtagLength; i++) {
-                let [currentNode, nextState] = childrenToDiff[i];
-
-                if (
-                    currentNode.useKey &&
-                    currentNode.node !== childrenReal[i]
-                ) {
-                    before(nextParent, currentNode.node, childrenReal[i]);
+                if (useKey && childFromKey !== childReal) {
+                    before(nextParent, childFromKey, childReal);
                 }
 
                 updateElement(
                     nextParent,
-                    currentNode.node,
-                    childrenReal[i],
-                    nextState,
+                    childFromKey,
+                    childReal,
+                    childVtag,
                     context,
                     isSvg
                 );
             }
         }
     } else {
-        if (prev.props.children !== next.props.children) {
-            base.textContent = next.props.children;
+        if (prev.children[0] !== next.children[0]) {
+            base.textContent = next.children[0];
         }
     }
 
