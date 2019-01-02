@@ -4,7 +4,7 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
 
 [<img src="assets/counter.png" width="100%"/>](https://codesandbox.io/s/20k8jm0x0r)
 
-## Índice
+## Index
 
 1. [Motivation](#motivation)
 2. [JSX](#jsx)
@@ -13,12 +13,12 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     2. [Control of component status](#control-of-component-status)
     3. [Control of the context of the component](#control-of-the-context-of-the-component)
 4. [Lifecycle](#lifecycle)
-    1. [oncreate](#oncreate)
-    2. [oncreated](#oncreated)
-    3. [onremove](#onremove)
-    4. [onremoved](#onremoved)
-    5. [onupdate](#onupdate)
-    6. [onupdated](#onupdated)
+    1. [onCreate](#onCreate)
+    2. [onCreated](#onCreated)
+    3. [onRemove](#onRemove)
+    4. [onRemoved](#onRemoved)
+    5. [onUpdate](#onUpdate)
+    6. [onUpdated](#onUpdated)
 5. [Hooks](#hooks)
     1. [useState](#useState)
     2. [useEffect](#useEffect)
@@ -105,79 +105,79 @@ The life cycle does not exist in itself over the component, it manifests itself 
 
 ```jsx
 export function Button(){
-    return <button oncreate={handlerWithCreate}>Hi! Orby</button>
+    return <button onCreate={handlerWithCreate}>Hi! Orby</button>
 }
 ```
 
-The DIFF process will invoke the `oncreate` properties only when the `<button/>`node is created in the dom tree. You can add the life cycle properties to the nodes you deem convenient.
+The DIFF process will invoke the `onCreate` properties only when the `<button/>`node is created in the dom tree. You can add the life cycle properties to the nodes you deem convenient.
 
-### oncreate
+### onCreate
 
-The `oncreate` property is invoked when the node is added in the dom tree.
+The `onCreate` property is invoked when the node is added in the dom tree.
 
 ```jsx
 export function Button(){
-    return <button oncreate={(target:HTMLElement)=>{
+    return <button onCreate={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### oncreated
+### onCreated
 
-The `oncreated` property is invoked after the node was added to the dom tree and propagated the changes to its children.
+The `onCreated` property is invoked after the node was added to the dom tree and propagated the changes to its children.
 
 ```jsx
 export function Button(){
-    return <button oncreated={(target:HTMLElement)=>{
+    return <button onCreated={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### onremove
+### onRemove
 
-The `onremove` property is invoked when removing the node from the dom tree.
+The `onRemove` property is invoked when removing the node from the dom tree.
 
 ```jsx
 export function Button(){
-    return <button onremove={(target:HTMLElement)=>{
+    return <button onRemove={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### onremoved
+### onRemoved
 
-The `onremoved` property is invoked after removing the node from the dom tree and propagating the changes to its children.
+The `onRemoved` property is invoked after removing the node from the dom tree and propagating the changes to its children.
 
 ```jsx
 export function Button(){
-    return <button onremoved={(target:HTMLElement)=>{
+    return <button onRemoved={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### onupdate
+### onUpdate
 
-The `onupdate` property is invoked before propagating from the node of the dom tree. **return`false` to avoid such propagation**
+The `onUpdate` property is invoked before propagating from the node of the dom tree. **return`false` to avoid such propagation**
 
 ```jsx
 export function Button(){
-    return <button onupdate={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
+    return <button onUpdate={(target:HTMLElement, prevProps:Object, nextProps:Object)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
 ```
 
-### onupdated
+### onUpdated
 
-The `onupdated` property is invoked after propagating from the node of the dom tree.
+The `onUpdated` property is invoked after propagating from the node of the dom tree.
 
 ```jsx
 export function Button(){
-    return <button onupdated={(target:HTMLElement)=>{
+    return <button onUpdated={(target:HTMLElement)=>{
     	/**algorithm**/
 	}}>Hi! Orby</button>
 }
@@ -231,7 +231,7 @@ export function Button(){
 
 It allows the execution of a function so many times the component is executed, this function is executed after the rendering process associated with patching the changes of the node.
 
-It is easier to understand the execution of `useEffect` by associating it with the life cycle methods of virtual-dom [oncreated](#oncreated) and [onupdated](#onupdated) and [onremove](#onremove).
+It is easier to understand the execution of `useEffect` by associating it with the life cycle methods of virtual-dom [onCreated](#onCreated) and [onUpdated](#onUpdated) and [onRemove](#onRemove).
 
 ```jsx
 import {h,useEffect} from "@orby/core";
@@ -245,7 +245,7 @@ export function Button(){
 }
 ```
 
-If you try to assimilate the execution of the event [onremove](#onremove) of the virtual-dom within `useEffect`, the function associated with `useEffect` must return a function.
+If you try to assimilate the execution of the event [onRemove](#onRemove) of the virtual-dom within `useEffect`, the function associated with `useEffect` must return a function.
 
 ```jsx
 export function Button(props,context){
@@ -274,7 +274,7 @@ export function Button(props,context){
 }
 ```
 
-### Special properties
+## Special properties
 
 ### key
 
