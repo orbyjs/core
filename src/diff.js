@@ -124,6 +124,11 @@ export function getComponents(node, components) {
 export function useState(initialState) {
     let key = CURRENT_KEY_STATE++,
         use = CURRENT_COMPONENT;
+    if (!use) {
+        throw new Error(
+            "the hooks can only be called from an existing functional component in the diff queue"
+        );
+    }
     if (!(key in use.states)) {
         use.states.push(
             typeof initialState === "function" ? initialState() : initialState
