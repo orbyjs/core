@@ -4,7 +4,7 @@ describe("Lifecycle", () => {
     test("create", () => {
         render(
             <div
-                oncreate={target => {
+                onCreate={target => {
                     expect(target.outerHTML).toBe("<div></div>");
                 }}
             >
@@ -16,7 +16,7 @@ describe("Lifecycle", () => {
     test("created", () => {
         render(
             <div
-                oncreated={target => {
+                onCreated={target => {
                     expect(target.outerHTML).toBe("<div>my-div</div>");
                 }}
             >
@@ -30,7 +30,7 @@ describe("Lifecycle", () => {
 
         render(
             <div
-                onupdate={target => {
+                onUpdate={target => {
                     expect(target.outerHTML).toBe("<div></div>");
                 }}
             >
@@ -45,7 +45,7 @@ describe("Lifecycle", () => {
 
         render(
             <div
-                onupdated={target => {
+                onUpdated={target => {
                     expect(target.outerHTML).toBe("<div>my-div</div>");
                 }}
             >
@@ -59,10 +59,10 @@ describe("Lifecycle", () => {
         let withUpdate,
             fistRender = render(
                 <div
-                    onremove={() => {
+                    onRemove={() => {
                         withUpdate = true;
                     }}
-                    onremoved={() => {
+                    onRemoved={() => {
                         expect(withUpdate).toBe(true);
                     }}
                 />,
