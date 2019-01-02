@@ -34,6 +34,7 @@ export let HANDLERS = "__HANDLERS__";
  */
 
 export let IGNORE = /^(context|children|(on){1}(Create|Update|Remove)(d){0,1}|xmlns|key|ref)$/;
+
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {Vtag} next - the next state of the node
@@ -168,7 +169,7 @@ export function useEffect(handler, args = []) {
             state.args.length &&
             !state.args.some((arg, index) => args[index] !== arg)
         ) {
-            handler = undefined;
+            use.effects.prevent[use.effects.updated.length] = true;
         } else {
             recollectComponentsEffects([use]);
         }
@@ -203,7 +204,7 @@ export class Component {
             CURRENT_COMPONENT = this;
 
             this.effects.updated = [];
-
+            this.effects.prevent = {};
             let nextStateRender = tag(this.props, this.context);
 
             CURRENT_COMPONENT = false;
@@ -215,13 +216,15 @@ export class Component {
                 nextStateRender,
                 this.context,
                 isSvg,
+                this.isCreate,
                 deep + 1,
-                currentComponents,
-                this.isCreate
+                currentComponents
             );
 
             this.effects.remove = this.effects.updated.map((handler, index) =>
-                handler ? handler() : this.effects.remove[index]
+                this.effects.prevent[index]
+                    ? this.effects.remove[index]
+                    : handler()
             );
 
             this.isCreate = false;
@@ -251,12 +254,12 @@ export function updateElement(
     next,
     context = {},
     isSvg,
+    isCreate,
     deep = 0,
-    currentComponents = [],
-    isCreate
+    currentComponents = []
 ) {
     let prev = getPrevious(node),
-        components = (node && node[COMPONENTS]) || currentComponents,
+        components = getComponents(node) || currentComponents,
         base = node,
         component,
         withUpdate = true;
@@ -308,6 +311,7 @@ export function updateElement(
     }
 
     if (isCreate && !component) {
+        base[REMOVE] = false;
         emit(next, "onCreate", base);
     }
 
@@ -340,7 +344,6 @@ export function updateElement(
                 childrenVtagLength = childrenVtag.length,
                 childrenRealLength = childrenReal.length,
                 childrenByKeys = {},
-                childrenToDiff = [],
                 childrenCountRemove = 0;
 
             for (let index = 0; index < childrenRealLength; index++) {
@@ -349,7 +352,7 @@ export function updateElement(
                     useKey = prev && prev.useKey,
                     key = useKey ? prev.key : index;
 
-                if (childrenVtagKeys.indexOf(key) > -1) {
+                if (childrenVtagKeys[key]) {
                     childrenByKeys[key] = [node, useKey];
                 } else {
                     recollectNodeTree(node);
@@ -376,8 +379,6 @@ export function updateElement(
                     childVtag,
                     context,
                     isSvg,
-                    0,
-                    [],
                     isCreate
                 );
             }
@@ -520,6 +521,7 @@ function recollectNodeTree(node) {
     recollectComponentsEffects(components);
 
     length = children.length;
+
     for (let i = 0; i < length; i++) {
         recollectNodeTree(children[i]);
     }
