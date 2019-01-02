@@ -7,7 +7,7 @@ export class Vtag {
      */
     constructor(tag, props = {}, children = []) {
         this.tag = tag;
-        this.keys = [];
+        this.keys = {};
         this.children = [];
         this.props = {
             ...props,
@@ -16,7 +16,7 @@ export class Vtag {
         this.key = this.props.key;
         this.ref = this.props.ref;
         this.useKey = this.props.key !== undefined;
-
+        this.keysLength = 0;
         this.loadChildren(children);
     }
     /**
@@ -35,14 +35,19 @@ export class Vtag {
             if (Array.isArray(value)) {
                 this.loadChildren(value);
             } else {
-                this.keys.push(
+                let key =
                     value instanceof Vtag
                         ? value.key !== undefined
                             ? value.key
-                            : this.keys.length
-                        : this.keys.length
-                );
-                this.children.push(value);
+                            : this.keysLength
+                        : this.keysLength;
+                if (this.keys[key]) {
+                    throw new Error("Each key must be unique among children");
+                } else {
+                    this.keys[key] = true;
+                    this.children.push(value);
+                    this.keysLength++;
+                }
             }
         }
     }
