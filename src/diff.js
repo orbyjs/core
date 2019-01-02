@@ -1,14 +1,9 @@
 import { Vtag } from "./vtag";
 import { create, remove, append, replace, root, before } from "./dom";
-import { reverse } from "dns";
-export { h } from "./vtag";
+import { options } from "./options";
 
 let CURRENT_COMPONENT;
 let CURRENT_KEY_STATE;
-
-export let config = {
-    delay: 0
-};
 
 export let COMPONENTS = "__COMPONENTS__";
 
@@ -53,7 +48,7 @@ export function render(next, parent, child, context, isSvg) {
  * @param {Function} handler
  */
 export function defer(handler) {
-    setTimeout(handler, config.delay);
+    setTimeout(handler, options.delay);
 }
 /**
  * It allows to execute a property of the virtual-dom,
@@ -93,7 +88,7 @@ export function getPrevious(node, create = true) {
 
                 for (let i = 0; i < attrsLength; i++) {
                     let { name, value } = attrs[i];
-                    props[name] = value;
+                    props[name] = name === "value" ? value : value || true;
                     if (name === "scoped") isScoped = true;
                 }
                 if (isScoped && supportAttachShadow) {
