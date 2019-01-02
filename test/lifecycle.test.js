@@ -1,5 +1,4 @@
-let { h, render } = require("../dist/orby");
-
+import { h, render } from "../dist/orby";
 describe("Lifecycle", () => {
     test("create", () => {
         render(

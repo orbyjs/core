@@ -1,4 +1,4 @@
-let { h, render, useState, useEffect } = require("../dist/orby");
+import { h, render } from "../dist/orby";
 
 describe("svg", () => {
     test("svg basic", () => {

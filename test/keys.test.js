@@ -1,4 +1,4 @@
-let { h, render } = require("../dist/orby");
+import { h, render } from "../dist/orby";
 
 function createList(length = 10) {
     let list = [];
