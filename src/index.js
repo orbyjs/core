@@ -1,1 +1,3 @@
-export { render, h, config, useState, useEffect } from "./diff";
+export { render, useState, useEffect } from "./diff";
+export { options } from "./options";
+export { h } from "./vtag";
