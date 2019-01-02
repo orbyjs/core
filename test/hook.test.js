@@ -1,4 +1,4 @@
-let { h, render, useState, useEffect } = require("../dist/orby");
+import { h, render, useState, useEffect, useReducer } from "../dist/orby";
 
 describe("test hooks", () => {
     test("useState && updated", () => {
@@ -66,5 +66,50 @@ describe("test hooks", () => {
         let fistRender = render(<Tag />, document.body);
 
         render(<div />, document.body, fistRender);
+    });
+});
+
+describe("customHooks", () => {
+    test("useReducer", done => {
+        let prefixCase = "prefix-",
+            initialAction = {
+                type: "DEFAULT",
+                payload: "fist-message"
+            },
+            secondAction = {
+                type: "UPDATE",
+                payload: "second-message"
+            };
+
+        function reducer(state, action) {
+            switch (action.type) {
+                case "UPDATE":
+                    return { message: prefixCase + action.payload };
+                default:
+                    return { message: action.payload };
+            }
+        }
+
+        function Test() {
+            let [state, dispatch] = useReducer(reducer, initialAction);
+            return (
+                <div
+                    onCreated={target => {
+                        expect(target.textContent).toBe(initialAction.payload);
+                        dispatch(secondAction);
+                    }}
+                    onUpdated={target => {
+                        expect(target.textContent).toBe(
+                            prefixCase + secondAction.payload
+                        );
+                        done();
+                    }}
+                >
+                    {state.message}
+                </div>
+            );
+        }
+
+        render(<Test />, document.body);
     });
 });
