@@ -265,7 +265,6 @@ export function updateElement(
         withUpdate = true;
 
     if (prev === next) return base;
-
     if (!(next instanceof Vtag)) {
         let nextType = typeof next;
         next = new Vtag("", {}, [
@@ -290,6 +289,7 @@ export function updateElement(
         component = components[deep];
         next = next.clone(prev.tag || "");
     }
+
     if (prev.tag !== next.tag) {
         base = create(next.tag, isSvg);
         if (node) {
@@ -365,8 +365,13 @@ export function updateElement(
                 let childVtag = childrenVtag[i],
                     childReal = childrenReal[i],
                     [childFromKey, useKey] =
-                        childrenByKeys[childVtag.useKey ? childVtag.key : i] ||
-                        [];
+                        childrenByKeys[
+                            childVtag instanceof Vtag
+                                ? childVtag.useKey
+                                    ? childVtag.key
+                                    : i
+                                : i
+                        ] || [];
 
                 if (useKey && childFromKey !== childReal) {
                     before(nextParent, childFromKey, childReal);
