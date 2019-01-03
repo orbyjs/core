@@ -312,23 +312,6 @@ la propiedad `context`, permite añadir nuevas propiedades al contexto.
 
 El componente  de ejemplo `ChildComponent`, puede hacer uso del contexto definido de forma superior. Note que no es necesario ingresar al componente para crear contextos. 
 
-## Render estatico
-
-Render estático permite recuperar el contenido ya impreso en el HTML, transformando los nodos dentro del documento en Vtag, no requiere un trabajo previo del servidor, simplemente requiere como 3 argumento de render el nodo a recuperar del documento.
-
-```jsx
-import {h,render} from "@orby/core";
-import App from "./app";
-
-render(
-    <App/>,
-    document.querySelector("#app"),
-    document.querySelector("#app>*")
-)
-```
-
-Esto es conveniente solo en caso de que ud dese trabajar con seo, ya que mediante esta opción ud puede enviar desde el servidor un estado ya impreso en el documento del dom.  `@orby/core` reciclara el estado y lo asociara a los componentes activos en en cliente. 
-
 ## Ejemplos
 
 |Titulo | link |
