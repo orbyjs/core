@@ -36,10 +36,8 @@ export class Vtag {
                 this.loadChildren(value);
             } else {
                 let key =
-                    value instanceof Vtag
-                        ? value.key !== undefined
-                            ? value.key
-                            : this.keysLength
+                    value instanceof Vtag && value.useKey
+                        ? value.key
                         : this.keysLength;
                 if (this.keys[key]) {
                     throw new Error("Each key must be unique among children");
