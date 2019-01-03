@@ -1,7 +1,7 @@
 {
   "name": "@orby/core",
   "description": "Orby is a small experiment of functional components based on virtual-dom.",
-  "version": "0.0.22",
+  "version": "0.0.24",
   "main": "dist/orby.js",
   "module": "dist/orby.mjs",
   "umd:main": "dist/orby.umd.js",
@@ -23,6 +23,7 @@
     "@babel/core": "^7.1.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
     "@babel/plugin-transform-react-jsx": "^7.0.0",
+    "@babel/preset-env": "^7.2.3",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
     "jest": "^23.6.0",
@@ -30,6 +31,14 @@
     "regenerator-runtime": "^0.12.1"
   },
   "babel": {
+    "presets":[
+      [
+        "@babel/preset-env",
+        {
+          "useBuiltIns": "entry"
+        }
+      ]
+    ],
     "plugins": [
       [
         "@babel/plugin-transform-react-jsx",
