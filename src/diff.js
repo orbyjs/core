@@ -7,7 +7,9 @@ let CURRENT_KEY_STATE;
 
 export let COMPONENTS = "__COMPONENTS__";
 
+/**static_render
 export let STATIC_RENDER = "__STATIC_RENDER__";
+*/
 
 /**
  * Master is the mark to store the previous state
@@ -70,6 +72,12 @@ export function getPrevious(node, create = true) {
         if (node[PREVIOUS]) {
             return node[PREVIOUS];
         } else {
+            /**static_render
+            // STATIC RENDER
+            // it is a way to homologate the behavior of server render, 
+            // it allows transoforming existing nodes in the document, in valid vtag for the diff process.
+            // `render(vtag,elementContainer,elementStaticRender)`
+
             let tag = "",
                 props = {},
                 children = [];
@@ -107,10 +115,10 @@ export function getPrevious(node, create = true) {
             node[STATIC_RENDER] = true;
             node[COMPONENTS] = [];
             return (node[PREVIOUS] = new Vtag(tag, props, children));
+            */
         }
-    } else {
-        return create ? new Vtag() : false;
     }
+    return create ? new Vtag() : false;
 }
 
 export function getComponents(node, components) {
@@ -265,6 +273,7 @@ export function updateElement(
         withUpdate = true;
 
     if (prev === next) return base;
+
     if (!(next instanceof Vtag)) {
         let nextType = typeof next;
         next = new Vtag("", {}, [
@@ -301,14 +310,17 @@ export function updateElement(
             (nodeSibling ? before : append)(parent, base, nodeSibling);
         }
         isCreate = true;
+    } else {
+        if (next.static) return base;
     }
 
     if (next.ref) next.ref.current = base;
-
+    /**static_render
     if (base[STATIC_RENDER]) {
         isCreate = true;
         base[STATIC_RENDER] = false;
     }
+    */
 
     if (isCreate && !component) {
         base[REMOVE] = false;
