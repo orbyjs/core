@@ -13,10 +13,10 @@ export class Vtag {
             ...props,
             children: this.children
         };
-        this.key = props.key;
-        this.ref = props.ref;
-        this.static = props.static;
-        this.useKey = props.key !== undefined;
+        this.key = this.props.key;
+        this.ref = this.props.ref;
+        this.static = this.props.static;
+        this.useKey = this.props.key !== undefined;
         this.keysLength = 0;
         this.loadChildren(children);
     }
