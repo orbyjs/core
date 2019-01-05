@@ -125,18 +125,22 @@ export function getComponents(node, components) {
     return node && node[COMPONENTS];
 }
 
+export function getCurrentComponent() {
+    if (CURRENT_COMPONENT) {
+        return CURRENT_COMPONENT;
+    }
+    throw new Error(
+        "the hooks can only be called from an existing functional component in the diff queue"
+    );
+}
 /**
  * Allows you to add an observer status of changes to the functional component
  * @param {*} initialState - Initial state to register
  */
 export function useState(initialState) {
     let key = CURRENT_KEY_STATE++,
-        use = CURRENT_COMPONENT;
-    if (!use) {
-        throw new Error(
-            "the hooks can only be called from an existing functional component in the diff queue"
-        );
-    }
+        use = getCurrentComponent();
+
     if (!(key in use.states)) {
         use.states.push(
             typeof initialState === "function" ? initialState() : initialState
@@ -165,7 +169,7 @@ export function useState(initialState) {
  */
 export function useEffect(handler, args = []) {
     let setup,
-        use = CURRENT_COMPONENT;
+        use = getCurrentComponent();
     args = [].concat(args);
     let [state] = useState(() => {
         setup = true;
@@ -184,6 +188,11 @@ export function useEffect(handler, args = []) {
         state.args = args;
     }
     use.effects.updated.push(handler);
+}
+
+export function useContext(space) {
+    let context = getCurrentComponent().context;
+    return space ? context[space] : context;
 }
 /**
  *
