@@ -1,7 +1,9 @@
 import { h, render } from "../dist/orby";
+import { container } from "./util";
 
 describe("diff", () => {
     test("create tree of nodes", () => {
+        let scope = container();
         let label = "text";
         render(
             <div id="parent">
@@ -9,15 +11,16 @@ describe("diff", () => {
                     <button>{label}</button>
                 </div>
             </div>,
-            document.body
+            scope
         );
 
-        expect(
-            document.body.querySelector("#parent #child button").textContent
-        ).toBe(label);
+        expect(scope.querySelector("#parent #child button").textContent).toBe(
+            label
+        );
     });
 
     test("create tree of nodes", () => {
+        let scope = container();
         let label = "text";
         render(
             <div class="parent">
@@ -25,27 +28,29 @@ describe("diff", () => {
                     <button>{label}</button>
                 </div>
             </div>,
-            document.body
+            scope
         );
 
-        expect(
-            document.body.querySelector(".parent .child button").textContent
-        ).toBe(label);
+        expect(scope.querySelector(".parent .child button").textContent).toBe(
+            label
+        );
     });
 
     test("create component", () => {
+        let scope = container();
         let label = "text";
 
         function Button(props) {
             return <button id="button">{props.label}</button>;
         }
 
-        render(<Button label={label} />, document.body);
+        render(<Button label={label} />, scope);
 
-        expect(document.body.querySelector("#button").textContent).toBe(label);
+        expect(scope.querySelector("#button").textContent).toBe(label);
     });
 
     test("context static", () => {
+        let scope = container();
         let id = 100;
 
         function Child(props, context) {
@@ -64,10 +69,11 @@ describe("diff", () => {
             <div context={{ id }}>
                 <Parent />
             </div>,
-            document.body
+            scope
         );
     });
     test("context dinamic", () => {
+        let scope = container();
         let id = 100,
             cd = 200;
 
@@ -87,7 +93,7 @@ describe("diff", () => {
             <div context={{ id }}>
                 <Parent />
             </div>,
-            document.body
+            scope
         );
     });
 });

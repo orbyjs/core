@@ -1,7 +1,8 @@
 import { h, render, useState } from "../dist/orby";
-
+import { container } from "./util";
 describe("children", () => {
     test("hidden children", done => {
+        let scope = container();
         function Test() {
             let [state, setState] = useState();
             return (
@@ -23,9 +24,10 @@ describe("children", () => {
             );
         }
 
-        render(<Test />, document.body);
+        render(<Test />, scope);
     });
     test("remove children", done => {
+        let scope = container();
         function Test() {
             let [state, setState] = useState(() => {
                 let list = [];
@@ -52,6 +54,6 @@ describe("children", () => {
             );
         }
 
-        render(<Test />, document.body);
+        render(<Test />, scope);
     });
 });

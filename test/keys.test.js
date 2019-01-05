@@ -1,5 +1,5 @@
 import { h, render } from "../dist/orby";
-
+import { container } from "./util";
 function createList(length = 10) {
     let list = [];
     for (let key = 0; key < length; key++) {
@@ -43,6 +43,7 @@ function randomInsert(list, length = 100) {
 
 describe("test keys", () => {
     test("keys reverse", () => {
+        let scope = container();
         let state = createList();
 
         let nextState = createList().reverse();
@@ -53,7 +54,7 @@ describe("test keys", () => {
                     <div id={key} key={key} />
                 ))}
             </div>,
-            document.body
+            scope
         );
 
         let fistIds = Array.from(fistRender.querySelectorAll("[id]"));
@@ -64,7 +65,7 @@ describe("test keys", () => {
                     <div id={key} key={key} />
                 ))}
             </div>,
-            document.body,
+            scope,
             fistRender
         );
 
@@ -82,6 +83,7 @@ describe("test keys", () => {
     });
 
     test("keys random", () => {
+        let scope = container();
         let state = createList();
 
         let nextState = randomList(createList());
@@ -92,7 +94,7 @@ describe("test keys", () => {
                     <div id={key} key={key} />
                 ))}
             </div>,
-            document.body
+            scope
         );
 
         let fistIds = Array.from(fistRender.querySelectorAll("[id]"));
@@ -103,7 +105,7 @@ describe("test keys", () => {
                     <div id={key} key={key} />
                 ))}
             </div>,
-            document.body,
+            scope,
             fistRender
         );
 
@@ -121,6 +123,7 @@ describe("test keys", () => {
     });
 
     test("keys with insert", () => {
+        let scope = container();
         let state = createList();
 
         let nextState = randomInsert(randomList(createList()));
@@ -131,7 +134,7 @@ describe("test keys", () => {
                     <div id={key} key={key} />
                 ))}
             </div>,
-            document.body
+            scope
         );
 
         let fistIds = Array.from(fistRender.querySelectorAll("[id]"));
@@ -142,7 +145,7 @@ describe("test keys", () => {
                     <div id={key} key={key} />
                 ))}
             </div>,
-            document.body,
+            scope,
             fistRender
         );
 

@@ -1,6 +1,8 @@
 import { h, render } from "../dist/orby";
+import { container } from "./util";
 describe("Lifecycle", () => {
     test("create", () => {
+        let scope = container();
         render(
             <div
                 onCreate={target => {
@@ -9,10 +11,11 @@ describe("Lifecycle", () => {
             >
                 my-div
             </div>,
-            document.body
+            scope
         );
     });
     test("created", () => {
+        let scope = container();
         render(
             <div
                 onCreated={target => {
@@ -21,11 +24,12 @@ describe("Lifecycle", () => {
             >
                 my-div
             </div>,
-            document.body
+            scope
         );
     });
     test("update", () => {
-        let fistRender = render(<div />, document.body);
+        let scope = container();
+        let fistRender = render(<div />, scope);
 
         render(
             <div
@@ -35,12 +39,13 @@ describe("Lifecycle", () => {
             >
                 my-div
             </div>,
-            document.body,
+            scope,
             fistRender
         );
     });
     test("updated", () => {
-        let fistRender = render(<div />, document.body);
+        let scope = container();
+        let fistRender = render(<div />, scope);
 
         render(
             <div
@@ -50,11 +55,12 @@ describe("Lifecycle", () => {
             >
                 my-div
             </div>,
-            document.body,
+            scope,
             fistRender
         );
     });
     test("remove && removed", () => {
+        let scope = container();
         let withUpdate,
             fistRender = render(
                 <div
@@ -65,9 +71,9 @@ describe("Lifecycle", () => {
                         expect(withUpdate).toBe(true);
                     }}
                 />,
-                document.body
+                scope
             );
 
-        render(<a />, document.body, fistRender);
+        render(<a />, scope, fistRender);
     });
 });

@@ -1,7 +1,8 @@
 import { h, render } from "../dist/orby";
-
+import { container } from "./util";
 describe("svg", () => {
     test("svg basic", () => {
+        let scope = container();
         render(
             <svg
                 height="100"
@@ -21,10 +22,11 @@ describe("svg", () => {
                     fill="red"
                 />
             </svg>,
-            document.body
+            scope
         );
     });
     test("svg path", () => {
+        let scope = container();
         render(
             <svg
                 height="496pt"
@@ -51,10 +53,11 @@ describe("svg", () => {
                     fill="#f0bc5e"
                 />
             </svg>,
-            document.body
+            scope
         );
     });
     test("svg image", () => {
+        let scope = container();
         render(
             <svg
                 width="200"
@@ -71,7 +74,7 @@ describe("svg", () => {
                     width="200"
                 />
             </svg>,
-            document.body
+            scope
         );
     });
 });
