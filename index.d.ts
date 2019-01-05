@@ -4,6 +4,18 @@ interface Options{
     delay:Number;
 }
 
+interface Reducer{
+    (state:any,action:object):any
+}
+
+interface Action{
+    type : any,
+}
+
+interface Dispatch{
+    (action:Action):void
+}
+
 /**
 interface HandlerDefault{
     (target:HTMLElement|SVGElement)
@@ -29,5 +41,7 @@ declare module "@orby/core"{
     export function render(next:VDom,parent:HTMLElement,child:?HTMLElement,context:?object,isSvg:?boolean):HTMLElement;
     export function useState(initialState:any):[any,Function,Function];
     export function useEffect(handler:Function,list:any[]):void;
+    export function useContext(Context?:object):any;
+    export function useReducer(state:any,reducer:Reducer,actionInit:?Action):[any,Dispatch];
     export let option:Option;
 }
