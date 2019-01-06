@@ -2,26 +2,37 @@ import { Vtag } from "./vtag";
 import { create, remove, append, replace, root, before } from "./dom";
 import { options } from "./options";
 
+/**
+ * stores locally only for the moment of execution of the component,
+ * the instance of registration of the same
+ */
 let CURRENT_COMPONENT;
+/**
+ * state marker associated with the component, it returns to zero with each component execution
+ */
 let CURRENT_KEY_STATE;
 
+/**
+ * constant for the list of components associated with the node
+ */
 export let COMPONENTS = "__COMPONENTS__";
 
 /**static_render
+ * this variable allows the hydration of components
 export let STATIC_RENDER = "__STATIC_RENDER__";
 */
 
 /**
- * Master is the mark to store the previous state
- * and if the node is controlled by one or more components
+ * constant to store the previous vtag
  */
 export let PREVIOUS = "__PREVIOUS__";
 /**
- * Each time a component is removed from the dom,
- * the property is marked as true
+ * constant to mark the deletion of a node
  */
 export let REMOVE = "__REMOVE__";
-
+/**
+ * Constant to mark events within a node
+ */
 export let HANDLERS = "__HANDLERS__";
 
 /**
@@ -41,32 +52,36 @@ export let IGNORE = /^(context|children|(on){1}(Create|Update|Remove)(d){0,1}|xm
  * @param {boolean} [isSvg] - check if the node belongs to a svg unit, to control it as such
  * @returns {HTMLElement} - The current node
  */
-export function render(next, parent, child, context, isSvg) {
-    return updateElement(root(parent), child, false, next, context, isSvg);
+export function render(next, parent, child) {
+    return updateElement(root(parent), child, false, next);
 }
 /**
- * execute a callback based on setTimeout, this is to avoid an
- * overload before the mamipulation of the state
+ * generates a bottleneck in status updates
  * @param {Function} handler
  */
 export function defer(handler) {
     setTimeout(handler, options.delay);
 }
 /**
- * It allows to execute a property of the virtual-dom,
- * this function has a use focused on the life cycle of the node
+ * allows to issue a property of the object
  * @param {Vtag} Vtag
  * @param {string} prop
  * @param  {...any} args
+ * @returns {boolean|undefined}
  */
 export function emit(Vtag, prop, ...args) {
     if (Vtag.removed) return;
     if (Vtag.remove && prop !== "onRemoved") return;
     if (prop === "onRemove") Vtag.remove = true;
     if (prop === "onRemoved") Vtag.removed = true;
-    if (Vtag.props[prop]) Vtag.props[prop](...args);
+    if (Vtag.props[prop]) return Vtag.props[prop](...args);
 }
-
+/**
+ * obtains the previous state of the node, if it does not exist it creates an empty one
+ * @param {HTMLElement|SVGElement|Text|undefined} node -node to extract the previous state by using the constate PREVIOUS
+ * @param {boolean} create - being false this prevents the creation of an empty state
+ * @returns {Vtag|boolean}
+ */
 export function getPrevious(node, create = true) {
     if (node) {
         if (node[PREVIOUS]) {
@@ -120,11 +135,18 @@ export function getPrevious(node, create = true) {
     }
     return create ? new Vtag() : false;
 }
-
-export function getComponents(node, components) {
+/**
+ * the components associated with the node return
+ * @param {HTMLElement|SVGElement|undefined} node
+ * @returns {Array|undefined}
+ */
+export function getComponents(node) {
     return node && node[COMPONENTS];
 }
-
+/**
+ * obtains the component in execution, for the connection with the hooks
+ * @returns {Vtag}
+ */
 export function getCurrentComponent() {
     if (CURRENT_COMPONENT) {
         return CURRENT_COMPONENT;
@@ -162,7 +184,7 @@ export function useState(initialState) {
 }
 /**
  * allows to add an observer effect before the changes of the component
- * note the use of `recollectComponentsEffects`, this function allows to clean the
+ * note the use of `clearComponentEffects`, this function allows to clean the
  * effects associated with the elimination of the component.
  * @param {Function} handler
  * @param {array} args - allows to issue the handler only when one of the properties is different from the previous one
@@ -182,25 +204,25 @@ export function useEffect(handler, args = []) {
             !state.args.some((arg, index) => args[index] !== arg)
         ) {
             use.effects.prevent[use.effects.updated.length] = true;
-        } else {
-            recollectComponentsEffects([use]);
         }
         state.args = args;
     }
     use.effects.updated.push(handler);
 }
-
+/**
+ * returns the current context of the component in execution
+ * @param {string} [space]
+ */
 export function useContext(space) {
     let context = getCurrentComponent().context;
     return space ? context[space] : context;
 }
 /**
- *
- * @param {Function} component  - Function that controls the node
- * @param {boolean} isSvg - Create components for a group of svg
- * @param {number} deep - Depth of the component
- * @param {number} currentKey - current depth level
- * @param {object} currentComponents
+ * generates a routing point by associating it with an instance stored in the current node
+ * @param {Function} tag - function to associate with the component instance
+ * @param {boolean} isSvg - define if the component belongs to a svg tree
+ * @param {number} deep - depth index of components
+ * @param {Array} currentComponents - group of components associated with the node
  */
 export class Component {
     constructor(tag, isSvg, deep, currentComponents) {
@@ -213,6 +235,9 @@ export class Component {
         this.effects = { remove: [], updated: [] };
         this.context = {};
         this.prevent = false;
+        /**
+         * allows to render the current node
+         */
         this.render = () => {
             //if (this.prevent) return this.base;
             if (this.base[REMOVE]) return;
@@ -222,9 +247,12 @@ export class Component {
 
             this.effects.updated = [];
             this.effects.prevent = {};
+
             let nextStateRender = tag(this.props, this.context);
 
             CURRENT_COMPONENT = false;
+
+            this.clearEffects(true);
 
             this.base = updateElement(
                 this.parent,
@@ -238,21 +266,45 @@ export class Component {
                 currentComponents
             );
 
-            this.effects.remove = this.effects.updated.map((handler, index) =>
-                this.effects.prevent[index]
-                    ? this.effects.remove[index]
-                    : handler()
-            );
+            this.gatherEffects();
 
             this.isCreate = false;
 
             return this.base;
         };
     }
+    /**
+     * cleans the effects associated with the component
+     * @param {boolean} withPrevent - being true uses the effects.prevent property to skip execution
+     *                                this option is given in a cleaning without elimination of the node
+     */
+    clearEffects(withPrevent) {
+        let length = this.effects.remove.length;
+        for (let i = 0; i < length; i++) {
+            let remove = this.effects.remove[i];
+            if (remove && (withPrevent ? !this.effects.prevent[i] : true))
+                remove();
+        }
+    }
+    /**
+     * creates a new deletion effects queue, being true within effect.prevent,
+     * the previous handler is retrieved
+     */
+    gatherEffects() {
+        let remove = [];
+        length = this.effects.updated.length;
+        for (let i = 0; i < length; i++) {
+            let handler = this.effects.updated[i];
+            remove[i] = this.effects.prevent[i]
+                ? this.effects.remove[i]
+                : handler();
+        }
+        this.effects.remove = remove;
+    }
 }
 
 /**
- * It allows to print the status of virtual dom on the planned configuration
+ * allows to create, change or update
  * @param {HTMLElement} parent - the container of the node
  * @param {HTMLElement} [node]  - the ancestor of the node
  * @param {HTMLElement} [nodeSibling]  - allows using the before method in replacement of append, if the node is created
@@ -280,7 +332,7 @@ export function updateElement(
         base = node,
         component,
         withUpdate = true;
-
+    //
     if (prev === next) return base;
 
     if (!(next instanceof Vtag)) {
@@ -295,11 +347,17 @@ export function updateElement(
     context = addContext ? { ...context, ...addContext } : context;
 
     isSvg = next.tag === "svg" || isSvg;
-
+    /**
+     * being a component compares the index with the current node,
+     * being different proceeds to its cleaning.
+     * this happens with the removal of a node
+     */
     if (components[deep] && components[deep].tag !== next.tag) {
-        recollectComponentsEffects(components.splice(deep));
+        clearComponentEffects(components.splice(deep));
     }
-
+    /**
+     * if the current tag is a function, a state memorization is created as a component
+     */
     if (typeof next.tag === "function") {
         if ((components[deep] || {}).tag !== next.tag) {
             components[deep] = new Component(next.tag, isSvg, deep, components);
@@ -312,17 +370,19 @@ export function updateElement(
         base = create(next.tag, isSvg);
         if (node) {
             if (!component && prev.tag) {
-                recollectNodeTree(node);
+                recollectNodeTree(node, deep);
             }
             replace(parent, base, node);
         } else {
+            /**
+             *  if there is no Sibling, the use of insertNode is assumed, replacing appendChild.
+             */
             (nodeSibling ? before : append)(parent, base, nodeSibling);
         }
         isCreate = true;
     } else {
         if (next.static) return base;
     }
-
     if (next.ref) next.ref.current = base;
     /**static_render
     if (base[STATIC_RENDER]) {
@@ -531,8 +591,9 @@ export function updateProperties(node, prev, next, isSvg) {
 /**
  * Issues the deletion of node and its children
  * @param {HTMLElement} node
+ * @param {boolean} ignoreEffects - allows to ignore the collection of effects, this is ignored in case the component changes the root node
  */
-function recollectNodeTree(node) {
+function recollectNodeTree(node, ignoreEffects) {
     let prev = getPrevious(node, false),
         components = getComponents(node),
         children = node.childNodes,
@@ -544,7 +605,7 @@ function recollectNodeTree(node) {
 
     emit(prev, "onRemove", node);
 
-    recollectComponentsEffects(components);
+    if (!ignoreEffects) clearComponentEffects(components);
 
     length = children.length;
 
@@ -555,15 +616,9 @@ function recollectNodeTree(node) {
     emit(prev, "onRemoved", node);
 }
 
-function recollectComponentsEffects(components) {
+function clearComponentEffects(components) {
     let length = components.length;
     for (let i = 0; i < length; i++) {
-        let component = components[i],
-            effectsRemove = component.effects.remove,
-            effectsLength = effectsRemove.length;
-        for (let i = 0; i < effectsLength; i++) {
-            if (effectsRemove[i]) effectsRemove[i]();
-        }
-        component.effects.remove = [];
+        components[i].clearEffects(false);
     }
 }
