@@ -291,8 +291,9 @@ export class Component {
      * the previous handler is retrieved
      */
     gatherEffects() {
-        let remove = [];
-        length = this.effects.updated.length;
+        let remove = [],
+            length = this.effects.updated.length;
+
         for (let i = 0; i < length; i++) {
             let handler = this.effects.updated[i];
             remove[i] = this.effects.prevent[i]
