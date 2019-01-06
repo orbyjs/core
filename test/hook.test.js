@@ -63,7 +63,6 @@ describe("test hooks", () => {
                 return () => {
                     setTimeout(() => {
                         expect(scope.querySelector("#tag")).toBe(null);
-
                         done();
                     });
                 };
