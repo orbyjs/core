@@ -314,6 +314,14 @@ El componente  de ejemplo `ChildComponent`, puede hacer uso del contexto definid
 
 ## Ejemplos
 
-|Titulo | link |
-|-------|------|
-|Counter | [🔗 link](https://codesandbox.io/s/20k8jm0x0r) |
+| Titulo | link |
+|--------|------|
+| Counter | [🔗 link](https://codesandbox.io/s/20k8jm0x0r) |
+
+## Utilidades
+
+| Titulo  | Detalle                                             | Repo                                           |
+|---------|-----------------------------------------------------|------------------------------------------------|
+| Router  | Gestiona tus rutas de forma simple y declarativa    | [🔗 link](https://github.com/orbyjs/router)    |
+| Context | Una pequeña implementación de `React.createContext` | [🔗 link](https://github.com/orbyjs/context)   |
+

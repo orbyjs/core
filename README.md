@@ -27,6 +27,7 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     2. [scoped](#scoped)
     3. [context](#context)
 7. [Examples](#examples)
+7. [Utils](#utils)
 
 ## Motivation
 
@@ -310,8 +311,15 @@ The example component `ChildComponent` can make use of the context defined in a 
 
 ## Examples
 
-|Title | link |
-|------|------|
-|Counter | [🔗 link](https://codesandbox.io/s/20k8jm0x0r) |
+| Title   | Description                  | link |
+|---------|------------------------------|------------------------------------------------|
+| Counter | shows the use of `useState` | [🔗 link](https://codesandbox.io/s/x308nz8mrp) |
+| Counter with Reducer | shows the use of `useState`| [🔗 link](https://codesandbox.io/s/2ww3ylj5wp) | 
+| Hooks Router | show how to use `useRouter` and `useRedirect`| [🔗 link](https://codesandbox.io/s/p7vzn8xx57) | 
 
+## Utilities
 
+| Title  | Description                                         | Repo                                           |
+|---------|-----------------------------------------------------|------------------------------------------------|
+| Router  | Manage your routes in a simple and declarative way  | [🔗 link](https://github.com/orbyjs/router)    |
+| Context | A small implementation of `React.createContext`     | [🔗 link](https://github.com/orbyjs/context)   |
