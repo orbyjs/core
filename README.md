@@ -22,6 +22,8 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
 5. [Hooks](#hooks)
     1. [useState](#useState)
     2. [useEffect](#useEffect)
+    3. [useReducer](#useReducer)
+    4. [useContext](#useContext)
 6. [Special properties](#special-properties)
     1. [key](#key)
     2. [scoped](#scoped)
@@ -31,7 +33,7 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
 
 ## Motivation
 
-Simplify the creation and maintenance of components, limiting its scope only functions, avoiding the use of classes, with the aim of simplifying the learning curve centered only on the use of functions and Jsx.
+Simplify the creation and maintenance of components, limiting its scope only functions, avoiding the use of classes, with the aim of simplifying the learning curve centered only on the use of functions, life cycle associated with nodes, hooks and Jsx.
 
 Another motivation is the use of shadow-dom, as part of the process of detecting changes. Example of this is the creation of a component with style scope thanks to the use of **shadow-dom**, please see the following example and note the definition of the property [scoped](#scoped).
 
@@ -102,7 +104,7 @@ render(
 
 ## Lifecycle
 
-The life cycle does not exist in itself over the component, it manifests itself over the created nodes, this is similar to how it operates in [Hyperapp](https://github.com/jorgebucaran/hyperapp).
+The life cycle manifests itself on the virtual-dom in the creation, updating and elimination of the nodes, this is similar to how it operates in [Hyperapp](https://github.com/jorgebucaran/hyperapp).
 
 ```jsx
 export function Button(){
@@ -187,11 +189,11 @@ export function Button(){
 
 ## Hooks
 
-Hooks are a powerful way to extend the behavior of a functional component created with **Orby**, this is a small implementation based on the [React Hooks](https://reactjs.org/docs/hooks-intro.html), consider also knowing well the [rules associated with the use of Hooks](https://reactjs.org/docs/hooks-rules.html)
+Hooks are a powerful way to extend the behavior of a functional component created with **Orby**, this is a small implementation based on the [React Hooks](https://reactjs.org/docs/hooks-intro.html), consider also knowing the benefits of this pattern and [rules associated with the use of Hooks](https://reactjs.org/docs/hooks-rules.html)
 
 ### ¿Why hooks?
 
-Independent logic of the functional component, you can create custom effects that are linked to the component only with the invocation, is such a link that these effects manage to control the state of the component without the need to know it.
+Hooks are a powerful way to separate logic from the functional component, you can create custom effects that are linked to the component only with the invocation, it is such a link that these effects manage to control the state of the component without the need to know the same component.
 
 ### useState
 
@@ -274,6 +276,61 @@ export function Button(props,context){
     return <button click={()=>setCount(count+1)}>increment</button>;   
 }
 ```
+
+### useReducer
+
+small implementation [use React](https://reactjs.org/docs/hooks-reference.html)
+
+```jsx
+const initialState = {count: 0};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'reset':
+      return {count: action.payload};
+    case 'increment':
+      return {count: state.count + 1};
+    case 'decrement':
+      return {count: state.count - 1};
+    default:
+      // A reducer must always return a valid state.
+      // Alternatively you can throw an error if an invalid action is dispatched.
+      return state;
+  }
+}
+
+function Counter({initialCount}) {
+  const [state, dispatch] = useReducer(
+    reducer,
+    initialState,
+    {type: 'reset', payload: initialCount},
+  );
+
+  return (
+    <div>
+      Count: {state.count}
+      <button
+        onClick={() => dispatch({type: 'reset', payload: initialCount})}>
+        Reset
+      </button>
+      <button onClick={() => dispatch({type: 'increment'})}>+</button>
+      <button onClick={() => dispatch({type: 'decrement'})}>-</button>
+    </div>
+  );
+}
+```
+
+
+
+### useContext
+
+It allows to recover the context of the component, unlike React's `useContext`, it returns the whole context if it does not have an argument.
+
+```jsx
+const context = useContext(Context);
+```
+
+Context is the return of the `createContext` instance of the library [@orby/context](https://github.com/orbyjs/context), this homologous behavior of `React.createContext`.
 
 ## Special properties
 
