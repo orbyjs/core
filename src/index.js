@@ -1,4 +1,5 @@
-export { render, useState, useEffect, useContext } from "./diff";
-export { useReducer } from "./customHooks";
+export { useReducer, useContext } from "./customHooks";
+export { useState, useEffect, getCurrentComponent } from "./component";
 export { options } from "./options";
+export { render } from "./diff";
 export { h } from "./vtag";
