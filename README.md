@@ -204,7 +204,7 @@ It allows using a state and associating it with the component, by default the co
 ```jsx
 import {h,useState} from "@orby/core";
 export function Button(){
-    let [state,useState,getState] = useState();
+    let [state,useState] = useState();
 }
 ```
 
@@ -226,7 +226,7 @@ function createState(){
     return {data:[]};
 }
 export function Button(){
-    let [state,useState,getState] = useState(createState);
+    let [state,useState] = useState(createState);
 }
 ```
 
