@@ -50,6 +50,15 @@ export function useState(initialState) {
         }
     ];
 }
+
+export function isDiffList(before, after) {
+    let length = before.length;
+    if (length !== after.length) return true;
+    for (let i = 0; i < length; i++) {
+        if (before[i] !== after[i]) return true;
+    }
+    return false;
+}
 /**
  * allows to add an observer effect before the changes of the component
  * note the use of `clearComponentEffects`, this function allows to clean the
@@ -67,10 +76,7 @@ export function useEffect(handler, args = []) {
     });
 
     if (!setup) {
-        if (
-            state.args.length &&
-            !state.args.some((arg, index) => args[index] !== arg)
-        ) {
+        if (state.args.length && isDiffList(state.args, args)) {
             use.effects.prevent[use.effects.updated.length] = true;
         }
         state.args = args;
