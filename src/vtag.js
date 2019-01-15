@@ -1,3 +1,4 @@
+import { isArray } from "./utils";
 export class Vtag {
     /**
      *
@@ -33,7 +34,7 @@ export class Vtag {
         let length = children.length;
         for (let i = 0; i < length; i++) {
             let value = children[i];
-            if (Array.isArray(value)) {
+            if (isArray(value)) {
                 this.loadChildren(value);
             } else {
                 let key =
