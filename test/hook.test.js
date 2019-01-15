@@ -1,4 +1,11 @@
-import { h, render, useState, useEffect, useReducer } from "../dist/orby";
+import {
+    h,
+    render,
+    useState,
+    useEffect,
+    useReducer,
+    useMemo
+} from "../dist/orby";
 import { container } from "./util";
 
 describe("test hooks", () => {
@@ -77,6 +84,7 @@ describe("test hooks", () => {
 
 describe("customHooks", () => {
     test("useReducer", done => {
+        let scope = container();
         let prefixCase = "prefix-",
             initialAction = {
                 type: "DEFAULT",
@@ -116,6 +124,41 @@ describe("customHooks", () => {
             );
         }
 
-        render(<Test />, document.body);
+        render(<Test />, scope);
+    });
+
+    test("useMemo basic", done => {
+        let scope = container();
+
+        function Test() {
+            let [state, setState] = useState();
+            let countCall = 0;
+            let list = useMemo(() => {
+                let list = [];
+                countCall++;
+                for (let i = 0; i < 100; i++) {
+                    list.push(i);
+                }
+                return list;
+            }, 100);
+
+            return (
+                <div
+                    onCreated={() => {
+                        setState();
+                    }}
+                    onUpdated={target => {
+                        expect(list.length).toBe(100);
+                        done();
+                    }}
+                >
+                    {list.map(() => (
+                        <button />
+                    ))}
+                </div>
+            );
+        }
+
+        render(<Test />, scope);
     });
 });
