@@ -1,4 +1,4 @@
-import { useState, getCurrentComponent } from "./component";
+import { useState, getCurrentComponent, isDiffList } from "./component";
 
 export function useReducer(reducer, firstAction = { type: "setup" }) {
     let [state, setState] = useState(() => ({
@@ -20,4 +20,18 @@ export function useReducer(reducer, firstAction = { type: "setup" }) {
 export function useContext(space) {
     let context = getCurrentComponent().context;
     return space ? context[space] : context;
+}
+
+export function useMemo(callback, args = []) {
+    let [state] = useState({ args: [] });
+
+    args = [].concat(args);
+
+    if (isDiffList(state.args, args)) {
+        state.memo = callback();
+    }
+
+    state.args = args;
+
+    return state.memo;
 }
