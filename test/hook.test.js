@@ -133,14 +133,17 @@ describe("customHooks", () => {
         function Test() {
             let [state, setState] = useState();
             let countCall = 0;
-            let list = useMemo(() => {
-                let list = [];
-                countCall++;
-                for (let i = 0; i < 100; i++) {
-                    list.push(i);
-                }
-                return list;
-            }, 100);
+            let list = useMemo(
+                () => {
+                    let list = [];
+                    countCall++;
+                    for (let i = 0; i < 100; i++) {
+                        list.push(i);
+                    }
+                    return list;
+                },
+                [100]
+            );
 
             return (
                 <div
