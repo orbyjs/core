@@ -286,6 +286,7 @@ export function updateElement(
  * @param {Boolean} [isSvg] - If it belongs to svg tree
  */
 export function updateProperties(node, prev, next, isSvg) {
+    if (prev === next) return;
     let prevKeys = Object.keys(prev),
         nextKeys = Object.keys(next),
         keys = prevKeys.concat(nextKeys),
