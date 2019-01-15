@@ -24,6 +24,7 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     2. [useEffect](#useEffect)
     3. [useReducer](#useReducer)
     4. [useContext](#useContext)
+    5. [useMemo](#useMemo)
 6. [Special properties](#special-properties)
     1. [key](#key)
     2. [scoped](#scoped)
@@ -331,6 +332,23 @@ const context = useContext(Context);
 ```
 
 Context is the return of the `createContext` instance of the library [@orby/context](https://github.com/orbyjs/context), this homologous behavior of `React.createContext`.
+
+### useMemo
+
+allows to memorize the return of a callback, each time the second argument changes.
+
+```jsx
+const list = useMemo(()=>{
+    let list =[];
+    for(let i=0;i<1000;i++){
+        list.push(i);
+    }
+    return list;
+},[1000]);
+```
+
+this function is executed in second instance only if the values given in the second argument of useMemo are disintos to the previous one.
+
 
 ## Special properties
 
