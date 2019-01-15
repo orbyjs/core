@@ -1,3 +1,4 @@
+import { isArray, isEqualArray } from "./utils";
 import { options } from "./options";
 import { updateElement } from "./diff";
 import { REMOVE } from "./constants";
@@ -51,14 +52,6 @@ export function useState(initialState) {
     ];
 }
 
-export function isDiffList(before, after) {
-    let length = before.length;
-    if (length !== after.length) return true;
-    for (let i = 0; i < length; i++) {
-        if (before[i] !== after[i]) return true;
-    }
-    return false;
-}
 /**
  * allows to add an observer effect before the changes of the component
  * note the use of `clearComponentEffects`, this function allows to clean the
@@ -66,20 +59,23 @@ export function isDiffList(before, after) {
  * @param {Function} handler
  * @param {array} args - allows to issue the handler only when one of the properties is different from the previous one
  */
-export function useEffect(handler, args = []) {
+export function useEffect(handler, args) {
     let setup,
-        use = getCurrentComponent();
-    args = [].concat(args);
+        use = getCurrentComponent(),
+        isValidArgs = isArray(args);
+
     let [state] = useState(() => {
         setup = true;
-        return { args };
+        return { args: isValidArgs ? args : [] };
     });
 
     if (!setup) {
-        if (state.args.length && isDiffList(state.args, args)) {
-            use.effects.prevent[use.effects.updated.length] = true;
+        if (isValidArgs) {
+            if (isEqualArray(state.args, args)) {
+                use.effects.prevent[use.effects.updated.length] = true;
+            }
+            state.args = args;
         }
-        state.args = args;
     }
     use.effects.updated.push(handler);
 }
