@@ -29,7 +29,7 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     1. [key](#key)
     2. [scoped](#scoped)
     3. [context](#context)
-7. [creteContext](#createContext)
+7. [createContext](#createContext)
 8. [Examples](#examples)
 9. [Utils](#utils)
 
