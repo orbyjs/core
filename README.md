@@ -328,10 +328,11 @@ function Counter({initialCount}) {
 It allows to recover the context of the component, unlike React's `useContext`, it returns the whole context if it does not have an argument.
 
 ```jsx
+
 const context = useContext(Context);
 ```
 
-Context is the return of the `createContext` instance of the library [@orby/context](https://github.com/orbyjs/context), this homologous behavior of `React.createContext`.
+Context is the return of the `createContext` instance, this homologous behavior of `React.createContext`.
 
 ### useMemo
 
