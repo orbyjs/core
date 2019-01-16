@@ -29,8 +29,9 @@ Orby is a small and minimalist library to create modern interfaces based on JSX,
     1. [key](#key)
     2. [scoped](#scoped)
     3. [context](#context)
-7. [Examples](#examples)
-7. [Utils](#utils)
+7. [creteContext](#createContext)
+8. [Examples](#examples)
+9. [Utils](#utils)
 
 ## Motivation
 
@@ -384,6 +385,78 @@ The `context` property allows you to add new properties to the context.
 ```
 
 The example component `ChildComponent` can make use of the context defined in a superior way. Note that it is not necessary to enter the component to create contexts.
+
+## createContext
+
+This function allows you to create contexts that already reserve a namespace.
+
+### Default contexts in Orby
+
+Orby by default allows to generate contexts in a simple way but this forces the child node to know the name of the property to access it and this can generate conflict.
+
+```jsx
+import {h,render} from "@orby/core";
+
+function Title(props,context){
+    return <h1>{context.myTitleContext}</h1>
+}
+
+render(
+    <Title context={{myTitleContext:"hello"}}/>,
+    document.body
+)
+```
+
+### context with createContext
+
+Through createContext, you ensure that the name of the property is stored only within the createContext instance, reducing the possibility of name conflict.
+
+```jsx
+import {h} from "@orby/core";
+import createContext from "@orby/context";
+
+let Context = createContext({title:"hello"});
+
+function Title(props,context){
+    return <h1>
+        <Context.Consumer>
+            {(data)=>data.title}
+        </Context.Consumer>
+    </h1>
+}
+
+render(
+    <Context.Provider>
+        <Title/>
+    </Context.Provider>,
+    document.body
+)
+```
+
+### consume context with useContext
+
+By giving useContext the context instance this returns the value of the property associated with the reservation and name of the context
+
+
+```jsx
+import {h,useContext,createContext} from "@orby/core";
+
+let Context = createContext({title:"hello"});
+
+function Title(props,context){
+    let data = useContext(Context);
+    return <h1>
+        {data.title}
+    </h1>
+}
+
+render(
+    <Context.Provider>
+        <Title/>
+    </Context.Provider>,
+    document.body
+)
+```
 
 ## Examples
 
