@@ -32,3 +32,7 @@ export const HANDLERS = "__HANDLERS__";
  */
 
 export const IGNORE = /^(context|children|(on){1}(Create|Update|Remove)(d){0,1}|xmlns|key|ref)$/;
+/**
+ *
+ */
+export const CONTEXT = "__CONTEXT__";
