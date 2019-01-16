@@ -1,12 +1,24 @@
 import { Vtag } from "./vtag";
 import { create, remove, append, replace, root, before } from "./dom";
 import { options } from "./options";
-import { COMPONENTS, PREVIOUS, REMOVE, HANDLERS, IGNORE } from "./constants";
+
+import {
+    COMPONENTS,
+    PREVIOUS,
+    REMOVE,
+    HANDLERS,
+    IGNORE,
+    PREVIOUS_CSS_TEXT
+} from "./constants";
+
 import {
     Component,
     clearComponentEffects,
     getCurrentComponent
 } from "./component";
+
+let MEMO_PROPERTIES_CSS = {};
+let MEMO_PROPERTIES_HANDLERS = {};
 /**
  * It allows to print the status of virtual dom on the planned configuration
  * @param {Vtag} next - the next state of the node
@@ -292,7 +304,6 @@ export function updateProperties(node, prev, next, isSvg) {
         keys = prevKeys.concat(nextKeys),
         length = keys.length,
         ignore = {};
-
     for (let i = 0; i < length; i++) {
         let prop = keys[i],
             inNext = prop in next,
@@ -318,9 +329,13 @@ export function updateProperties(node, prev, next, isSvg) {
         let isFnPrev = typeof prevValue === "function",
             isFnNext = typeof nextValue === "function";
         if (isFnPrev || isFnNext) {
-            prop = prop.replace(/on(\w)/, (all, letter) =>
-                letter.toLowerCase()
-            );
+            if (!MEMO_PROPERTIES_HANDLERS[prop]) {
+                MEMO_PROPERTIES_HANDLERS[prop] = prop.replace(
+                    /on(\w)/,
+                    (all, letter) => letter.toLowerCase()
+                );
+            }
+            prop = MEMO_PROPERTIES_HANDLERS[prop];
             if (!isFnNext && isFnPrev) {
                 node.removeEventListener(prop, node[HANDLERS][prop][0]);
             }
@@ -347,24 +362,29 @@ export function updateProperties(node, prev, next, isSvg) {
                 (isSvg && prop === "style")
             ) {
                 if (prop === "style") {
+                    let prevCss = node[PREVIOUS_CSS_TEXT],
+                        nextCss = nextValue;
                     if (typeof nextValue === "object") {
-                        let prevStyle = prevValue || {},
-                            nextStyle = nextValue;
-                        for (let prop in nextStyle) {
-                            if (prevStyle[prop] !== nextStyle[prop]) {
-                                if (prop[0] === "-") {
-                                    node.style.setProperty(
-                                        prop,
-                                        nextStyle[prop]
-                                    );
-                                } else {
-                                    node.style[prop] = nextStyle[prop];
-                                }
+                        nextCss = "";
+                        for (let prop in nextValue) {
+                            if (!MEMO_PROPERTIES_CSS[prop]) {
+                                MEMO_PROPERTIES_CSS[prop] = prop.replace(
+                                    /([^A-Z])([A-Z])/g,
+                                    (all, letterBefore, letterAfter) =>
+                                        letterBefore +
+                                        "-" +
+                                        letterAfter.toLowerCase()
+                                );
                             }
+                            nextCss += `${MEMO_PROPERTIES_CSS[prop]}:${
+                                nextValue[prop]
+                            };`;
                         }
-                    } else {
-                        node.style.cssText = nextValue;
                     }
+                    if (nextCss !== prevCss) {
+                        node.style.cssText = nextCss;
+                    }
+                    node[PREVIOUS_CSS_TEXT] = nextCss;
                 } else {
                     node[prop] = nextValue;
                 }
