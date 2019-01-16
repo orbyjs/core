@@ -13,6 +13,10 @@ export const STATIC_RENDER = "__STATIC_RENDER__";
  */
 export const PREVIOUS = "__PREVIOUS__";
 /**
+ *
+ */
+export const PREVIOUS_CSS_TEXT = "__PREVIOUS_CSS__";
+/**
  * constant to mark the deletion of a node
  */
 export const REMOVE = "__REMOVE__";
