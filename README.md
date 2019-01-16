@@ -412,8 +412,7 @@ render(
 Through createContext, you ensure that the name of the property is stored only within the createContext instance, reducing the possibility of name conflict.
 
 ```jsx
-import {h} from "@orby/core";
-import createContext from "@orby/context";
+import {h, createContext} from "@orby/core";
 
 let Context = createContext({title:"hello"});
 
