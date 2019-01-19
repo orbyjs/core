@@ -44,7 +44,7 @@ export function useState(initialState) {
             use.states[key] = nextState;
             if (use.prevent) return;
             setTimeout(() => {
-                use.update();
+                use.update(true);
                 use.prevent = false;
             }, options.delay);
             use.prevent = true;
@@ -72,97 +72,119 @@ export function useEffect(handler, args) {
     if (!setup) {
         if (isValidArgs) {
             if (isEqualArray(state.args, args)) {
-                use.effects.prevent[use.effects.updated.length] = true;
+                use.effectsToPrevent[use.effectsToUpdated.length] = true;
             }
             state.args = args;
         }
     }
-    use.effects.updated.push(handler);
+    use.effectsToUpdated.push(handler);
 }
 
 /**
  * generates a routing point by associating it with an instance stored in the current node
+ * @class
  * @param {Function} tag - function to associate with the component instance
- * @param {boolean} isSvg - define if the component belongs to a svg tree
  * @param {number} deep - depth index of components
- * @param {Array} currentComponents - group of components associated with the node
+ * @param {Array} components - group of components associated with the node
+ * @property {HTMLElement} parent - parentElement where the node to be updated is hosted by the component
+ * @property {HTMLElement} base - node already hosted within the parentElement, to update or replace
+ * @property {boolean} isSvg - if true, the component will create svg nodes
+ * @property {boolean} deep - depth level of the component, in the high order list.
+ * @property {boolean} boot - Bootstrap, defines if the component is instantiated, to force executions
+ * @property {Array} components - List of components in high order
+ * @property {object} props - component properties
+ * @property {states} states - state store for useState
+ * @property {Array} effectsToRemove - Efectos a limpiar antes de cada render o eliminación.
+ * @property {Array} effectsToUpdated - Effects to call after each render
+ * @property {Object} effectsToPrevent - effects to prevent execution, either by comparison of parameters
+ * @property {Object} context - inherited context to the component
+ * @property {boolean} prevent - the microtask, blocks the execution of render based on options.delay,
+ *                               prevent allows to respect this blocking
  */
 export class Component {
-    constructor(tag, isSvg, deep, currentComponents) {
-        this.isCreate = true;
-        this.base;
+    constructor(tag, deep, components) {
         this.parent;
+        this.base;
+        this.isSvg;
+        this.deep = deep;
+        this.boot = true;
+        this.components = components;
         this.tag = tag;
         this.props = {};
         this.states = [];
-        this.effects = { remove: [], updated: [] };
+        this.effectsToRemove = [];
+        this.effectsToUpdated = [];
+        this.effectsToPrevent = {};
         this.context = {};
         this.prevent = false;
-        /**
-         * allows to render the current node
-         */
-        this.update = () => {
-            //if (this.prevent) return this.base;
-            if (this.base[REMOVE]) return;
-
-            CURRENT_KEY_STATE = 0;
-            CURRENT_COMPONENT = this;
-
-            this.effects.updated = [];
-            this.effects.prevent = {};
-
-            let nextStateRender = tag(this.props, this.context);
-
-            CURRENT_COMPONENT = false;
-
-            this.clearEffects(true);
-
-            this.base = updateElement(
-                this.parent,
-                this.base,
-                false,
-                nextStateRender,
-                this.context,
-                isSvg,
-                this.isCreate,
-                deep + 1,
-                currentComponents
-            );
-
-            this.recollectEffects();
-
-            this.isCreate = false;
-
-            return this.base;
-        };
     }
     /**
      * cleans the effects associated with the component
-     * @param {boolean} withPrevent - being true uses the effects.prevent property to skip execution
+     * @param {boolean} withPrevent - being true uses the effectsToPrevent property to skip execution
      *                                this option is given in a cleaning without elimination of the node
      */
     clearEffects(withPrevent) {
-        let length = this.effects.remove.length;
+        let length = this.effectsToRemove.length;
         for (let i = 0; i < length; i++) {
-            let remove = this.effects.remove[i];
-            if (remove && (withPrevent ? !this.effects.prevent[i] : true))
+            let remove = this.effectsToRemove[i];
+            if (remove && (withPrevent ? !this.effectsToPrevent[i] : true))
                 remove();
         }
     }
     /**
-     * creates a new deletion effects queue, being true within effect.prevent,
+     * creates a new deletion effects queue, being true within effectsToPrevent,
      * the previous handler is retrieved
      */
     recollectEffects() {
         let remove = [],
-            length = this.effects.updated.length;
+            length = this.effectsToUpdated.length;
 
         for (let i = 0; i < length; i++) {
-            let handler = this.effects.updated[i];
-            remove[i] = this.effects.prevent[i]
-                ? this.effects.remove[i]
+            let handler = this.effectsToUpdated[i];
+            remove[i] = this.effectsToPrevent[i]
+                ? this.effectsToRemove[i]
                 : handler();
         }
-        this.effects.remove = remove;
+        this.effectsToRemove = remove;
+    }
+    update() {
+        //if (this.prevent) return this.base;
+        if (this.base[REMOVE]) return;
+
+        CURRENT_KEY_STATE = 0;
+        CURRENT_COMPONENT = this;
+
+        this.effectsToUpdated = [];
+        this.effectsToPrevent = {};
+
+        let nextState = this.tag(this.props, this.context);
+
+        CURRENT_COMPONENT = false;
+
+        this.clearEffects(true);
+
+        let base = updateElement(
+            this.parent,
+            this.base,
+            false,
+            nextState,
+            this.context,
+            this.isSvg,
+            this.boot,
+            this.deep + 1,
+            this.components
+        );
+        /**
+         * updates the parents of the presence of the new node
+         */
+        if (base !== this.base) {
+            for (let i = 0; i < this.deep; i++) {
+                this.components[i].base = base;
+            }
+        }
+        this.base = base;
+        this.recollectEffects();
+        this.boot = false;
+        return this.base;
     }
 }
