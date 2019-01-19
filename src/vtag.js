@@ -1,7 +1,18 @@
 import { isArray } from "./utils";
+/**
+ * @property {Function|string} tag - being string will create a node, since it is a
+ *                               function that will isolate its execution as a component
+ * @property {object} keys - to avoid the index map within the diff process the vtag will
+ *                           generate one based on the required method that joins the children in a single list
+ * @property {array} children - list of nodes associated with the vtag
+ * @property {object} props - vtag properties
+ * @property {key} key - index of the vtag
+ * @property {boolean} static - define if the node is static for updateElement
+ * @property {boolean} useKey - If you have a key definition, this property is defined as true
+ * @property {number} keysLength - number of children associated with the vtag
+ */
 export class Vtag {
     /**
-     *
      * @param {Function|String} tag - Node component or label
      * @param {Object} props - Properties of the label
      * @param {Array} children - Children assigned to the node
@@ -19,23 +30,28 @@ export class Vtag {
         this.static = this.props.static;
         this.useKey = this.props.key !== undefined;
         this.keysLength = 0;
-        this.loadChildren(children);
+        this.mapChildren(children);
     }
     /**
      * Clone the current node by keeping props and children by default
      * @param {Function|String} tag -  Node component or label
      * @param {*} props - Properties of the label
      * @param {*} children - Children assigned to the node
+     * @return {Vtag}
      */
     clone(tag = this.tag, props = this.props, children = this.props.children) {
         return new Vtag(tag, props, children);
     }
-    loadChildren(children) {
+    /**
+     * list the children to attach them to children
+     * @param {Array} children
+     */
+    mapChildren(children) {
         let length = children.length;
         for (let i = 0; i < length; i++) {
             let value = children[i];
             if (isArray(value)) {
-                this.loadChildren(value);
+                this.mapChildren(value);
             } else {
                 let key =
                     value instanceof Vtag && value.useKey
