@@ -3,17 +3,15 @@
  */
 export const COMPONENTS = "__COMPONENTS__";
 
-/**static_render
- * this variable allows the hydration of components
-export const STATIC_RENDER = "__STATIC_RENDER__";
-*/
-
 /**
  * constant to store the previous vtag
  */
 export const PREVIOUS = "__PREVIOUS__";
 /**
- *
+ * CSS does not change the style based on an iteration since
+ * each mutation is a mutation in the sun. instead of this
+ * it creates a string style, to generate a single mutation,
+ * this string is stored in the node associating it with this constant
  */
 export const PREVIOUS_CSS_TEXT = "__PREVIOUS_CSS__";
 /**
@@ -33,6 +31,6 @@ export const HANDLERS = "__HANDLERS__";
 
 export const IGNORE = /^(context|children|(on){1}(Create|Update|Remove)(d){0,1}|xmlns|key|ref)$/;
 /**
- *
+ *The createClass function uses this constant to define the context prefix
  */
 export const CONTEXT = "__CONTEXT__";
