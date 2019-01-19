@@ -134,13 +134,14 @@ export function updateElement(
     isSvg,
     isCreate,
     deep = 0,
-    currentComponents = []
+    components = []
 ) {
     let prev = getPrevious(node),
-        components = getComponents(node) || currentComponents,
         base = node,
         component,
         withUpdate = true;
+
+    components = getComponents(node) || components;
     //
     if (prev === next) return base;
 
@@ -169,12 +170,11 @@ export function updateElement(
      */
     if (typeof next.tag === "function") {
         if ((components[deep] || {}).tag !== next.tag) {
-            components[deep] = new Component(next.tag, isSvg, deep, components);
+            components[deep] = new Component(next.tag, deep, components);
         }
         component = components[deep];
         next = next.clone(prev.tag || "");
     }
-
     if (prev.tag !== next.tag) {
         base = create(next.tag, isSvg);
         if (node) {
@@ -199,19 +199,18 @@ export function updateElement(
         base[STATIC_RENDER] = false;
     }
     */
-
     if (isCreate && !component) {
         base[REMOVE] = false;
         emit(next, "onCreate", base);
     }
 
     if (component) {
+        component.isSvg = isSvg;
         component.base = base;
         component.parent = parent;
         component.props = next.props;
         component.context = context;
 
-        //if (deep && component.prevent) {
         if (component.prevent) {
             return component.base;
         }
