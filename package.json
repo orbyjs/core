@@ -16,6 +16,7 @@
     "watch": "microbundle -w --name @orby/core",
     "test": "jest",
     "build": "microbundle --name @orby/core",
+    "build:uncompress": "microbundle --name @orby/core --compress ",
     "prepare": "npm run build && npm test",
     "upload": "npm publish --access public"
   },

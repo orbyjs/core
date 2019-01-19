@@ -1,45 +1,5 @@
 import { h, render } from "../dist/orby";
-import { container } from "./util";
-function createList(length = 10) {
-    let list = [];
-    for (let key = 0; key < length; key++) {
-        list.push({ key: String(key) });
-    }
-    return list;
-}
-
-function randomList(list) {
-    var currentIndex = list.length,
-        temporaryValue,
-        randomIndex;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-        // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-
-        // And swap it with the current element.
-        temporaryValue = list[currentIndex];
-        list[currentIndex] = list[randomIndex];
-        list[randomIndex] = temporaryValue;
-    }
-
-    return list;
-}
-
-function randomInsert(list, length = 100) {
-    for (let i = 0; i < length; i++) {
-        let insertIn = Math.floor(Math.random() * list.length);
-
-        let before = list.slice(0, insertIn),
-            after = list.slice(insertIn),
-            key = insertIn + "." + i;
-
-        list = before.concat({ key }, after);
-    }
-    return list;
-}
+import { container, createList, randomList, randomInsert } from "./util";
 
 describe("test keys", () => {
     test("keys reverse", () => {
@@ -73,7 +33,7 @@ describe("test keys", () => {
 
         expect(
             secondIds.every((node, index) => node.id === nextState[index].key)
-        ).toBe(true);
+        ).toBeTruthy();
 
         secondIds.reverse();
 
@@ -113,13 +73,13 @@ describe("test keys", () => {
 
         expect(
             secondIds.every((node, index) => node.id === nextState[index].key)
-        ).toBe(true);
+        ).toBeTruthy();
 
         expect(
             secondIds
                 .sort((a, b) => (a.id > b.id ? 1 : -1))
                 .every((node, index) => node === fistIds[index])
-        ).toBe(true);
+        ).toBeTruthy();
     });
 
     test("keys with insert", () => {
@@ -153,6 +113,6 @@ describe("test keys", () => {
 
         expect(
             secondIds.every((node, index) => node.id === nextState[index].key)
-        ).toBe(true);
+        ).toBeTruthy();
     });
 });

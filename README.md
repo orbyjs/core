@@ -470,4 +470,3 @@ render(
 | Title  | Description                                         | Repo                                           |
 |---------|-----------------------------------------------------|------------------------------------------------|
 | Router  | Manage your routes in a simple and declarative way  | [🔗 link](https://github.com/orbyjs/router)    |
-| Context | A small implementation of `React.createContext`     | [🔗 link](https://github.com/orbyjs/context)   |
