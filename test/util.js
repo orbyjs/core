@@ -2,7 +2,7 @@ export function container() {
     return document.createElement("div");
 }
 
-function createList(length = 10) {
+export function createList(length = 10) {
     let list = [];
     for (let key = 0; key < length; key++) {
         list.push({ key: String(key) });
@@ -10,7 +10,7 @@ function createList(length = 10) {
     return list;
 }
 
-function randomList(list) {
+export function randomList(list) {
     var currentIndex = list.length,
         temporaryValue,
         randomIndex;
@@ -30,7 +30,7 @@ function randomList(list) {
     return list;
 }
 
-function randomInsert(list, length = 100) {
+export function randomInsert(list, length = 100) {
     for (let i = 0; i < length; i++) {
         let insertIn = Math.floor(Math.random() * list.length);
 
