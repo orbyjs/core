@@ -41,7 +41,7 @@ Another motivation is the use of shadow-dom, as part of the process of detecting
 
 ```jsx
 function Button(props){
-    return <button scoped>
+    return <div scoped>
         <style>{`
             :host{
                 padding : .5rem 1rem;
@@ -51,7 +51,7 @@ function Button(props){
             }
         `}</style>   
         {props.children}
-    </button>
+    </div>
 }
 ```
 
@@ -367,10 +367,10 @@ the `scoped` property allows to enable the use of `shadow-dom` on the node, when
 
 ```jsx
 export function Button(props){
-    return <button scoped>
+    return <div scoped>
         <style>{`:host{background:crimson}`}</style>	
         {props.children}
-    </button>
+    </div>
 }
 ```
 
