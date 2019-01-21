@@ -5,11 +5,16 @@ import { REMOVE } from "./constants";
 
 let CURRENT_COMPONENT;
 let CURRENT_KEY_STATE;
-
-export function clearComponentEffects(components) {
+/**
+ * @param {Array} components  List of components to clean the effects
+ * @param {boolean} [remove] If true, component.update will not continue with the update process since the component is given as removed.
+ */
+export function clearComponentEffects(components, remove) {
     let length = components.length;
     for (let i = 0; i < length; i++) {
-        components[i].clearEffects(false);
+        let component = components[i];
+        component.clearEffects(false);
+        if (remove && component) component.remove = true;
     }
 }
 
@@ -90,6 +95,7 @@ export function useEffect(handler, args) {
  * @property {HTMLElement} base - node already hosted within the parentElement, to update or replace
  * @property {boolean} isSvg - if true, the component will create svg nodes
  * @property {boolean} deep - depth level of the component, in the high order list.
+ * @property {boolean} remove - Bootstrap, defines if the component is instantiated, to force executions
  * @property {boolean} boot - Bootstrap, defines if the component is instantiated, to force executions
  * @property {Array} components - List of components in high order
  * @property {object} props - component properties
@@ -106,6 +112,7 @@ export class Component {
         this.parent;
         this.base;
         this.isSvg;
+        this.remove;
         this.deep = deep;
         this.boot = true;
         this.components = components;
@@ -149,7 +156,7 @@ export class Component {
     }
     update() {
         //if (this.prevent) return this.base;
-        if (this.base[REMOVE]) return;
+        if (this.base[REMOVE] || this.remove) return;
 
         CURRENT_KEY_STATE = 0;
         CURRENT_COMPONENT = this;
