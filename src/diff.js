@@ -163,7 +163,7 @@ export function updateElement(
      * this happens with the removal of a node
      */
     if (components[deep] && components[deep].tag !== next.tag) {
-        clearComponentEffects(components.splice(deep));
+        clearComponentEffects(components.splice(deep), true);
     }
     /**
      * if the current tag is a function, a state memorization is created as a component
@@ -422,7 +422,7 @@ function recollectNodeTree(node, ignoreEffects) {
 
     emit(prev, "onRemove", node);
 
-    if (!ignoreEffects) clearComponentEffects(components);
+    if (!ignoreEffects) clearComponentEffects(components, true);
 
     length = children.length;
 
