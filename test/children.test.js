@@ -56,4 +56,31 @@ describe("children", () => {
 
         render(<Test />, scope);
     });
+
+    test("props children", () => {
+        let scope = container();
+        function Test(props) {
+            return (
+                <div
+                    onCreated={target => {
+                        expect(target.children.length).toBe(4);
+                    }}
+                >
+                    {props.children}
+                </div>
+            );
+        }
+
+        render(
+            <Test
+                children={[
+                    <span>1</span>,
+                    <span>2</span>,
+                    <span>3</span>,
+                    <span>4</span>
+                ]}
+            />,
+            scope
+        );
+    });
 });
