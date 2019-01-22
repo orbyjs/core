@@ -18,6 +18,7 @@ export class Vtag {
      * @param {Array} children - Children assigned to the node
      */
     constructor(tag, props = {}, children = []) {
+        props = props === null ? {} : props;
         this.tag = tag;
         this.keys = {};
         this.children = [];
@@ -25,12 +26,12 @@ export class Vtag {
             ...props,
             children: this.children
         };
-        this.key = this.props.key;
-        this.ref = this.props.ref;
-        this.static = this.props.static;
-        this.useKey = this.props.key !== undefined;
+        this.key = props.key;
+        this.ref = props.ref;
+        this.static = props.static;
+        this.useKey = props.key !== undefined;
         this.keysLength = 0;
-        this.mapChildren(children);
+        this.mapChildren(isArray(props.children) ? props.children : children);
     }
     /**
      * Clone the current node by keeping props and children by default
