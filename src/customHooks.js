@@ -34,3 +34,8 @@ export function useMemo(callback, args) {
 
     return state.memo;
 }
+
+export function useRef(current) {
+    let [state] = useState({ current });
+    return state;
+}
