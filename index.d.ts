@@ -1,7 +1,9 @@
-import {VDom} from "./src/vdom";
+import { Vtag } from "./src/vtag";
+import { Component } from "./src/component";
 
 interface Options{
-    delay:Number;
+    document:?object,
+    delay:Number
 }
 
 interface Reducer{
@@ -16,32 +18,26 @@ interface Dispatch{
     (action:Action):void
 }
 
-/**
-interface HandlerDefault{
-    (target:HTMLElement|SVGElement)
+interface ProviderProps{
+    value:?any,
+    children:Array
 }
-interface HandlerUpdate{
-    (target:HTMLElement|SVGElement,prev:object,next:object):boolean|undefined
+
+interface Context{
+    Provider(props:ProviderProps,context:object):Vtag,
+    Consumer(handler:Function):Vtag|any
 }
-    
-interface Props{
-    oncreate:?HandlerDefault,
-    oncreated:?HandlerDefault,
-    onupdate:?HandlerUpdate,
-    onupdated:?HandlerDefault,
-    onremove:?HandlerDefault,
-    onremoved:?HandlerDefault,
-    context:?object,
-    scoped:?boolean,
-}
-*/
 
 declare module "@orby/core"{
-    export function h(tag:string,props?:object,...children):VDom;
-    export function render(next:VDom,parent:HTMLElement,child:?HTMLElement,context:?object,isSvg:?boolean):HTMLElement;
+    export function h(tag:string,props?:object,...children):Vtag;
+    export function render(next:Vtag,parent:HTMLElement,child:?HTMLElement,context:?object,isSvg:?boolean):HTMLElement;
     export function useState(initialState:any):[any,Function,Function];
     export function useEffect(handler:Function,list:any[]):void;
     export function useContext(Context?:object):any;
     export function useReducer(state:any,reducer:Reducer,actionInit:?Action):[any,Dispatch];
+    export function useRef(current:?any):object;
+    export function useMemo(handler:Function):any;
+    export function createContext(value:?any):Context;
+    export function getCurrentComponent():Component;
     export let option:Option;
 }
