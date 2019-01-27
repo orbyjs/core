@@ -297,7 +297,6 @@ export function updateElement(
  * @param {Boolean} [isSvg] - If it belongs to svg tree
  */
 export function updateProperties(node, prev, next, isSvg) {
-    if (prev === next) return;
     let prevKeys = Object.keys(prev),
         nextKeys = Object.keys(next),
         keys = prevKeys.concat(nextKeys),
@@ -321,18 +320,21 @@ export function updateProperties(node, prev, next, isSvg) {
         }
 
         if ("scoped" === prop && "attachShadow" in node) {
-            if (!node.shadowRoot)
+            if (
+                (node.shadowRoot && !nextValue) ||
+                (!node.shadowRoot && nextValue)
+            ) {
                 node.attachShadow({ mode: nextValue ? "open" : "closed" });
+            }
             continue;
         }
+
         let isFnPrev = typeof prevValue === "function",
             isFnNext = typeof nextValue === "function";
         if (isFnPrev || isFnNext) {
+            if (prop[0] !== "o" && props[1] !== "n") continue;
             if (!MEMO_PROPERTIES_HANDLERS[prop]) {
-                MEMO_PROPERTIES_HANDLERS[prop] = prop.replace(
-                    /on(\w)/,
-                    (all, letter) => letter.toLowerCase()
-                );
+                MEMO_PROPERTIES_HANDLERS[prop] = prop.toLowerCase().slice(2);
             }
             prop = MEMO_PROPERTIES_HANDLERS[prop];
             if (!isFnNext && isFnPrev) {
