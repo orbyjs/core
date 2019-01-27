@@ -243,7 +243,7 @@ export function Button(){
     useEffect(()=>{
        document.title = `clicked ${count}`;
     });
-    return <button click={()=>setCount(count+1)}>increment</button>;
+    return <button onClick={()=>setCount(count+1)}>increment</button>;
 }
 ```
 
@@ -258,7 +258,7 @@ export function Button(props,context){
             document.title = `component remove`;
         }
     });
-    return <button click={()=>setCount(count+1)}>increment</button>;   
+    return <button onClick={()=>setCount(count+1)}>increment</button>;   
 }
 ```
 
@@ -272,7 +272,7 @@ export function Button(props,context){
             console.log("component remove")
         }
     },[true]);
-    return <button click={()=>setCount(count+1)}>increment</button>;   
+    return <button onClick={()=>setCount(count+1)}>increment</button>;   
 }
 ```
 
