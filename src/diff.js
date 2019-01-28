@@ -368,18 +368,20 @@ export function updateProperties(node, prev, next, isSvg) {
                     if (typeof nextValue === "object") {
                         nextCss = "";
                         for (let prop in nextValue) {
-                            if (!MEMO_PROPERTIES_CSS[prop]) {
-                                MEMO_PROPERTIES_CSS[prop] = prop.replace(
-                                    /([^A-Z])([A-Z])/g,
-                                    (all, letterBefore, letterAfter) =>
-                                        letterBefore +
-                                        "-" +
-                                        letterAfter.toLowerCase()
-                                );
+                            if (nextValue) {
+                                if (!MEMO_PROPERTIES_CSS[prop]) {
+                                    MEMO_PROPERTIES_CSS[prop] = prop.replace(
+                                        /([^A-Z])([A-Z])/g,
+                                        (all, letterBefore, letterAfter) =>
+                                            letterBefore +
+                                            "-" +
+                                            letterAfter.toLowerCase()
+                                    );
+                                }
+                                nextCss += `${MEMO_PROPERTIES_CSS[prop]}:${
+                                    nextValue[prop]
+                                };`;
                             }
-                            nextCss += `${MEMO_PROPERTIES_CSS[prop]}:${
-                                nextValue[prop]
-                            };`;
                         }
                     }
                     if (nextCss !== prevCss) {
